@@ -8,8 +8,9 @@ all: buildproj
 
 
 #####   QTP_MACRO   #####
-QTP_SRC = include/ThreadBase.cpp \
-		  src/MDReceiver.cpp src/BiQTP.cpp
+QTP_SRC = lib/log/log.cpp \
+		  include/ThreadBase.cpp \
+		  src/MDReceiver.cpp src/MDRing.cpp src/BiIniter.cpp src/BiQTP.cpp
 INCLUDE_SRC = -Iinclude -Ilib
 LIB_SRC = -lcurl -lcrypto
 

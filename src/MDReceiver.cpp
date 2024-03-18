@@ -1,8 +1,8 @@
 ﻿/*
- * File:   MDReceiver.cpp
- * Author: summer@SummerLab
- * Date:   2024-03-17
- * Upadte: 2024-03-17
+ * File:        MDReceiver.cpp
+ * Author:      summer@SummerLab
+ * CreateDate:  2024-03-17
+ * LastEdit:    2024-03-17
  * Description: Receive MarketData from Binance
  */
 
