@@ -27,8 +27,9 @@
 // include
 //#include <ThreadBase.h>
 
-//#include "Param.h"
 #include "MDRing.h"
+#include "MDReceiver.h"
+#include "Calculator.h"
 #include "BiIniter.h"
 #include "Global.h"
 
@@ -60,6 +61,18 @@ int main()
     initer.InitSymbolUMap();
     //initer.InitSymbolFilter();
     initer.UpdateSymbolFilter();
+
+    // MD
+    MDReceiver receiver("https://api3.binance.com");
+    receiver.Start();
+
+    // Cal
+    Calculator calculator;
+    calculator.Start();
+
+    // join
+    receiver.Join();
+    calculator.Join();
 
     // ~
     curl_global_cleanup();

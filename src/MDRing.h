@@ -20,6 +20,18 @@
 #define PRECISION7  "0.00000010"
 #define PRECISION8  "0.00000001"
 
+#define GAP30S  (6)
+#define GAP1M  (12)
+#define GAP2M  (12*2)
+#define GAP3M  (12*3)
+#define GAP5M  (12*5)
+#define GAP10M  (12*10)
+#define GAP20M  (12*20)
+#define GAP25M  (12*25)
+#define GAP30M  (12*30)
+#define GAP60M  (12*60)
+#define GAP100M  (12*100)
+
 
 //############################################################//
 //   MDRing Class
@@ -28,11 +40,12 @@ class MDRing
 {
 public:
     MDRing();
-    MDRing(const std::string& symbol);
+    //MDRing(const std::string& symbol);
     ~MDRing();
 
     void SetSymbolName(const std::string& symbol);
     const std::string& GetSymbolName();
+
     void PushMD(double last_price);
     void CalMovingAverage();
     void CalADRatio();
@@ -49,15 +62,24 @@ public:
 
 private:
     std::string mSymbol;
+
     int md_index;
-    int cal_index;
+    int cal_ma_index;
+    int cal_adr_index;
     int buy_index;
     int sell_index;
-    bool flag[RING_SIZE];
+    int cycle_cnt;
+
+    // 5s最新价
     double price[RING_SIZE];
+    // ~
+    double mt5m;
     double ma5m[RING_SIZE];
+    double mt25m;
     double ma25m[RING_SIZE];
+    double mt100m;
     double ma100m[RING_SIZE];
+    // ~
     double adr30s[RING_SIZE];
     double adr1m[RING_SIZE];
     double adr2m[RING_SIZE];

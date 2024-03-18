@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include <chrono>
-#include <curl/curl.h>
 #include <ThreadBase.h>
 
 
@@ -29,15 +27,16 @@ public:
     int RequestAllPrice();
 
     // curl回调函数
-    static size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *userp);
+    static size_t MDWriteCallback(void *contents, size_t size, size_t nmemb, std::string *userp);
 
 private:
     std::string mMdUrl;
     CURL *mMdCurl=nullptr;
-    CURLcode mClCode;
+    CURLcode mCurlCode;
+    static std::string mCurlBuffer;
+
     std::chrono::time_point<std::chrono::steady_clock> reqTime;
     std::chrono::time_point<std::chrono::steady_clock> nowTime;
-    static std::string mRetBuffer;
 };
 
 //##################################################//

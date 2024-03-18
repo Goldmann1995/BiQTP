@@ -33,9 +33,9 @@ public:
         for(int i=0; i<RING_BUFFER_SIZE; i++)
         {
             msg_loop[i].first = false;
-            //@C++// 
+            //@C++// 不能memset非POD类型
             //memset(&msg_loop[i].second, 0, sizeof(T));
-            //@C++// 
+            //@C++// 替换placement new
             new (&msg_loop[i].second) T();
         }
     }

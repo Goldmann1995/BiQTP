@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <string>
+#include <log/log.h>
 
 #include "MDRing.h"
 
@@ -17,12 +18,12 @@
 //##################################################//
 MDRing::MDRing()
 {
-    //mSymbol = symbol;
-}
-
-MDRing::MDRing(const std::string& symbol)
-{
-    mSymbol = symbol;
+    md_index = 0;
+    cal_ma_index = 0;
+    cal_adr_index = 0;
+    buy_index = 0;
+    sell_index = 0;
+    cycle_cnt = 0;
 }
 
 //##################################################//
@@ -45,21 +46,231 @@ const std::string& MDRing::GetSymbolName()
 
 void MDRing::PushMD(double last_price)
 {
-    int index = md_index+1/RING_SIZE;
+    int index = md_index+1%RING_SIZE;
     price[index] = last_price;
+    if(md_index+1==RING_SIZE)
+        cycle_cnt++;
     md_index=index;
+
+    LOG_INFO("MDRing::PushMD() Symbol: %s Index: %d Price: %f",  mSymbol.c_str(), index, last_price);
 }
 
 void MDRing::CalMovingAverage()
 {
-    if(cal_index==md_index)
+    if(cal_ma_index==md_index)
         return;
+    else   // cal_ma_index
+    {
+        int next_index = cal_ma_index+1%RING_SIZE;
+        mt5m += price[next_index];
+        mt25m += price[next_index];
+        mt100m += price[next_index];
+
+        if(cycle_cnt == 0)
+        {
+            if(next_index>=GAP5M)
+            {
+                mt5m -= price[next_index-GAP5M];
+                ma5m[next_index] = mt5m/GAP5M;
+
+                LOG_INFO("MDRing::CalMovingAverage() Symbol: %s MA5: %f",  mSymbol.c_str(), ma5m[next_index]);
+            }
+
+            if(next_index>=GAP25M)
+            {
+                mt25m -= price[next_index-GAP25M];
+                ma25m[next_index] = mt25m/GAP25M;
+            }
+
+            if(next_index>=GAP100M)
+            {
+                mt100m -= price[next_index-GAP100M];
+                ma100m[next_index] = mt100m/GAP100M;
+            }
+        }
+        else
+        {
+            if(next_index>=GAP5M)
+            {
+                mt5m -= price[next_index-GAP5M];
+                ma5m[next_index] = mt5m/GAP5M;
+            }
+            else
+            {
+                mt5m -= price[RING_SIZE-GAP5M-next_index];
+                ma5m[next_index] = mt5m/GAP5M; 
+            }
+
+            if(next_index>=GAP25M)
+            {
+                mt25m -= price[next_index-GAP25M];
+                ma25m[next_index] = mt25m/GAP25M;
+            }
+            else
+            {
+                mt25m -= price[RING_SIZE-GAP25M-next_index];
+                ma25m[next_index] = mt25m/GAP25M; 
+            }
+
+            if(next_index>=GAP100M)
+            {
+                mt100m -= price[next_index-GAP100M];
+                ma100m[next_index] = mt100m/GAP100M;
+            }
+            else
+            {
+                mt100m -= price[RING_SIZE-GAP100M-next_index];
+                ma100m[next_index] = mt100m/GAP100M; 
+            }
+        }
+
+        cal_ma_index = next_index;
+    }
 }
 
 void MDRing::CalADRatio()
 {
-    if(cal_index==md_index)
+    if(cal_adr_index == md_index)
         return;
+    else   // cal_adr_index
+    {
+        int next_index = cal_adr_index+1%RING_SIZE;
+
+        if(cycle_cnt == 0)
+        {
+            if(next_index>=GAP30S)
+            {
+                adr30s[next_index] = (price[next_index]-price[next_index-GAP30S])/price[next_index-GAP30S];
+
+                LOG_INFO("MDRing::CalMovingAverage() Symbol: %s ADR30S: %f",  mSymbol.c_str(), adr30s[next_index]);
+            }
+
+            if(next_index>=GAP1M)
+            {
+                adr1m[next_index] = (price[next_index]-price[next_index-GAP1M])/price[next_index-GAP1M];
+            }
+
+            if(next_index>=GAP2M)
+            {
+                adr2m[next_index] = (price[next_index]-price[next_index-GAP2M])/price[next_index-GAP2M];
+            }
+
+            if(next_index>=GAP3M)
+            {
+                adr3m[next_index] = (price[next_index]-price[next_index-GAP3M])/price[next_index-GAP3M];
+            }
+
+            if(next_index>=GAP5M)
+            {
+                adr5m[next_index] = (price[next_index]-price[next_index-GAP5M])/price[next_index-GAP5M];
+            }
+
+            if(next_index>=GAP10M)
+            {
+                adr10m[next_index] = (price[next_index]-price[next_index-GAP10M])/price[next_index-GAP10M];
+            }
+
+            if(next_index>=GAP20M)
+            {
+                adr20m[next_index] = (price[next_index]-price[next_index-GAP20M])/price[next_index-GAP20M];
+            }
+
+            if(next_index>=GAP30M)
+            {
+                adr30m[next_index] = (price[next_index]-price[next_index-GAP30M])/price[next_index-GAP30M];
+            }
+
+            if(next_index>=GAP60M)
+            {
+                adr60m[next_index] = (price[next_index]-price[next_index-GAP60M])/price[next_index-GAP60M];
+            }
+        }
+        else
+        {
+            if(next_index>=GAP30S)
+            {
+                adr30s[next_index] = (price[next_index]-price[next_index-GAP30S])/price[next_index-GAP30S];
+            }
+            else
+            {
+                adr30s[next_index] = (price[next_index]-price[RING_SIZE-GAP30S+next_index])/price[RING_SIZE-GAP30S+next_index];
+            }
+
+            if(next_index>=GAP1M)
+            {
+                adr1m[next_index] = (price[next_index]-price[next_index-GAP1M])/price[next_index-GAP1M];
+            }
+            else
+            {
+                adr1m[next_index] = (price[next_index]-price[RING_SIZE-GAP1M+next_index])/price[RING_SIZE-GAP1M+next_index];
+            }
+
+            if(next_index>=GAP2M)
+            {
+                adr2m[next_index] = (price[next_index]-price[next_index-GAP2M])/price[next_index-GAP2M];
+            }
+            else
+            {
+                adr2m[next_index] = (price[next_index]-price[RING_SIZE-GAP2M+next_index])/price[RING_SIZE-GAP2M+next_index];
+            }
+
+            if(next_index>=GAP3M)
+            {
+                adr3m[next_index] = (price[next_index]-price[next_index-GAP3M])/price[next_index-GAP3M];
+            }
+            else
+            {
+                adr3m[next_index] = (price[next_index]-price[RING_SIZE-GAP3M+next_index])/price[RING_SIZE-GAP3M+next_index];
+            }
+
+            if(next_index>=GAP5M)
+            {
+                adr5m[next_index] = (price[next_index]-price[next_index-GAP5M])/price[next_index-GAP5M];
+            }
+            else
+            {
+                adr5m[next_index] = (price[next_index]-price[RING_SIZE-GAP5M+next_index])/price[RING_SIZE-GAP5M+next_index];
+            }
+
+            if(next_index>=GAP10M)
+            {
+                adr10m[next_index] = (price[next_index]-price[next_index-GAP10M])/price[next_index-GAP10M];
+            }
+            else
+            {
+                adr10m[next_index] = (price[next_index]-price[RING_SIZE-GAP10M+next_index])/price[RING_SIZE-GAP10M+next_index];
+            }
+
+            if(next_index>=GAP20M)
+            {
+                adr20m[next_index] = (price[next_index]-price[next_index-GAP20M])/price[next_index-GAP20M];
+            }
+            else
+            {
+                adr20m[next_index] = (price[next_index]-price[RING_SIZE-GAP20M+next_index])/price[RING_SIZE-GAP20M+next_index];
+            }
+
+            if(next_index>=GAP30M)
+            {
+                adr30m[next_index] = (price[next_index]-price[next_index-GAP30M])/price[next_index-GAP30M];
+            }
+            else
+            {
+                adr30m[next_index] = (price[next_index]-price[RING_SIZE-GAP30M+next_index])/price[RING_SIZE-GAP30M+next_index];
+            }
+
+            if(next_index>=GAP60M)
+            {
+                adr60m[next_index] = (price[next_index]-price[next_index-GAP60M])/price[next_index-GAP60M];
+            }
+            else
+            {
+                adr60m[next_index] = (price[next_index]-price[RING_SIZE-GAP60M+next_index])/price[RING_SIZE-GAP60M+next_index];
+            }
+        }
+
+        cal_adr_index = next_index;
+    }
 }
 
 void MDRing::SetMinPrice(const std::string& price)

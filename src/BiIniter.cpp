@@ -91,10 +91,7 @@ void BiIniter::InitSymbolUMap()
                 {
                     symbolUMap.insert(make_pair(symbol, index));
                     mdring[index].SetSymbolName(symbol);
-                    //std::cout << "Init # Index: " << index << "  Symbol: " << symbol << std::endl;
-                    //std::cout << "Init # GetSymbolName: " << mdring[symbolUMap[symbol]].GetSymbolName() << std::endl;
-                    LOG_INFO("Init # Index: %d  Symbol: %s", index, symbol.c_str());
-                    //LOG_INFO("   %s   ", " ____ ____ ____ ____ ____ ");
+                    LOG_INFO("BiIniter::UpdateSymbolFilter() Symbol: %s Index: %d  ", symbol.c_str(), index);
                     index++;
                 }
             }
@@ -157,7 +154,7 @@ void BiIniter::UpdateSymbolFilter()
         //std::cout << "Index: " << index << " Symbol: " << symbol_iter.first << std::endl;
 
         // 打开文件流
-        std::string filename = "./etc/exchangeInfo/" + symbol_iter.first + ".json";
+        std::string filename = "/home/Binance/BiQTP/etc/exchangeInfo/" + symbol_iter.first + ".json";
         std::ifstream inputFile(filename, std::ios::in);
 
         if( !inputFile.is_open() )
