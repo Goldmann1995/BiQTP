@@ -15,6 +15,7 @@
 
 #include <curl/curl.h>
 #include <rapidjson/document.h>
+#include <log/log.h>
 
 #include "BiIniter.h"
 #include "RingBuffer.hpp"
@@ -90,8 +91,10 @@ void BiIniter::InitSymbolUMap()
                 {
                     symbolUMap.insert(make_pair(symbol, index));
                     mdring[index].SetSymbolName(symbol);
-                    std::cout << "Init # Index: " << index << "  Symbol: " << symbol << std::endl;
-                    std::cout << "Init # GetSymbolName: " << mdring[symbolUMap[symbol]].GetSymbolName() << std::endl;
+                    //std::cout << "Init # Index: " << index << "  Symbol: " << symbol << std::endl;
+                    //std::cout << "Init # GetSymbolName: " << mdring[symbolUMap[symbol]].GetSymbolName() << std::endl;
+                    LOG_INFO("Init # Index: %d  Symbol: %s", index, symbol.c_str());
+                    //LOG_INFO("   %s   ", " ____ ____ ____ ____ ____ ");
                     index++;
                 }
             }
@@ -148,10 +151,10 @@ void BiIniter::InitSymbolFilter()
 
 void BiIniter::UpdateSymbolFilter()
 {
-    int index = 0;
+    //int index = 0;
     for(const auto& symbol_iter:symbolUMap)
     {
-        std::cout << "Index: " << index << " Symbol: " << symbol_iter.first << std::endl;
+        //std::cout << "Index: " << index << " Symbol: " << symbol_iter.first << std::endl;
 
         // 打开文件流
         std::string filename = "./etc/exchangeInfo/" + symbol_iter.first + ".json";
@@ -195,7 +198,7 @@ void BiIniter::UpdateSymbolFilter()
                     return;
                 }
                 
-                std::cout << "Index: " << index++ << " Symbol: " << symbols[0]["symbol"].GetString() << std::endl;
+                //std::cout << "Index: " << index++ << " Symbol: " << symbols[0]["symbol"].GetString() << std::endl;
 
                 // 访问第一个符号的filters数组
                 const rapidjson::Value& filters = symbols[0]["filters"];
@@ -235,7 +238,7 @@ void BiIniter::UpdateSymbolFilter()
                     }
                 }
 
-                mdring[symbol_iter.second].PrintExchangeInfo();
+                //mdring[symbol_iter.second].PrintExchangeInfo();
             }
             else
             {
