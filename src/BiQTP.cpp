@@ -24,16 +24,15 @@
 #include <rapidjson/document.h>
 #include <log/log.h>
 
-// include
-//#include <ThreadBase.h>
-
+// Module
 #include "MDRing.h"
 #include "MDReceiver.h"
 #include "Calculator.h"
+#include "Strategy.h"
 #include "BiIniter.h"
-#include "Global.h"
 
-using namespace std;
+// Global
+#include "Global.h"
 
 
 /********** Main Entry **********/
@@ -70,9 +69,14 @@ int main()
     Calculator calculator;
     calculator.Start();
 
+    // Strategy
+    Strategy strategy;
+    strategy.Start();
+
     // join
     receiver.Join();
     calculator.Join();
+    strategy.Join();
 
     // ~
     curl_global_cleanup();

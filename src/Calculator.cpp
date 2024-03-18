@@ -56,8 +56,8 @@ void Calculator::Run()
 	while( true )
 	{
         nowTime = std::chrono::steady_clock::now();
-        std::chrono::seconds elapsed = std::chrono::duration_cast<std::chrono::seconds>(nowTime - calTime);
-        if( elapsed >= std::chrono::seconds(1) )
+        std::chrono::milliseconds elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - calTime);
+        if( elapsed_time >= std::chrono::milliseconds(1) )
         {
             calTime = std::chrono::steady_clock::now();
             CalculateLastPrice();

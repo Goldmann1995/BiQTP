@@ -21,8 +21,11 @@ MDRing::MDRing()
     md_index = 0;
     cal_ma_index = 0;
     cal_adr_index = 0;
-    buy_index = 0;
-    sell_index = 0;
+    for(int i=0; i<ST_SIZE; i++)
+    {
+        buy_index[i] = -1;
+        sell_index[i] = -1;
+    }
     cycle_cnt = 0;
 }
 
@@ -34,16 +37,65 @@ MDRing::~MDRing()
     //
 }
 
+//##################################################//
+//   设置Symbol名称
+//##################################################//
 void MDRing::SetSymbolName(const std::string& symbol)
 {
     mSymbol = symbol;
 }
 
+//##################################################//
+//   获取Symbol名称
+//##################################################//
 const std::string& MDRing::GetSymbolName()
 {
     return mSymbol;
 }
 
+void MDRing::SetBuyIndex(int stidx)
+{
+    buy_index[stidx] = cal_adr_index;
+}
+
+void MDRing::ClearBuyIndex(int stidx)
+{
+    buy_index[stidx] = -1;
+}
+
+int MDRing::GetBuyIndex(int stidx)
+{
+    return buy_index[stidx];
+}
+
+void MDRing::SetSellIndex(int stidx)
+{
+    sell_index[stidx] = cal_adr_index;
+}
+
+int MDRing::GetSellIndex(int stidx)
+{
+    return sell_index[stidx];
+}
+
+int MDRing::GetSellGap(int stidx)
+{
+    return cal_adr_index-sell_index[stidx];
+}
+
+void MDRing::ClearSellIndex(int stidx)
+{
+    sell_index[stidx] = -1;
+}
+
+double MDRing::GetProfit(int stidx, double base)
+{
+    return (price[cal_adr_index]-price[buy_index[stidx]])*base/price[buy_index[stidx]];
+}
+
+//##################################################//
+//   更新行情
+//##################################################//
 void MDRing::PushMD(double last_price)
 {
     int index = md_index+1%RING_SIZE;
@@ -52,7 +104,7 @@ void MDRing::PushMD(double last_price)
         cycle_cnt++;
     md_index=index;
 
-    LOG_INFO("MDRing::PushMD() Symbol: %s Index: %d Price: %f",  mSymbol.c_str(), index, last_price);
+    //LOG_DEBUG("MDRing::PushMD() Symbol: %s Index: %d Price: %f",  mSymbol.c_str(), index, last_price);
 }
 
 void MDRing::CalMovingAverage()
@@ -73,7 +125,7 @@ void MDRing::CalMovingAverage()
                 mt5m -= price[next_index-GAP5M];
                 ma5m[next_index] = mt5m/GAP5M;
 
-                LOG_INFO("MDRing::CalMovingAverage() Symbol: %s MA5: %f",  mSymbol.c_str(), ma5m[next_index]);
+                //LOG_DEBUG("MDRing::CalMovingAverage() Symbol: %s MA5: %f",  mSymbol.c_str(), ma5m[next_index]);
             }
 
             if(next_index>=GAP25M)
@@ -142,7 +194,7 @@ void MDRing::CalADRatio()
             {
                 adr30s[next_index] = (price[next_index]-price[next_index-GAP30S])/price[next_index-GAP30S];
 
-                LOG_INFO("MDRing::CalMovingAverage() Symbol: %s ADR30S: %f",  mSymbol.c_str(), adr30s[next_index]);
+                //LOG_DEBUG("MDRing::CalMovingAverage() Symbol: %s ADR30S: %f",  mSymbol.c_str(), adr30s[next_index]);
             }
 
             if(next_index>=GAP1M)
@@ -270,6 +322,115 @@ void MDRing::CalADRatio()
         }
 
         cal_adr_index = next_index;
+    }
+}
+
+// tips summer@20240319 - 需要重写 考虑cycle
+double MDRing::GetADRatio30s(unsigned int lead)
+{
+    if(cal_adr_index-lead>=GAP30S)
+    {
+        return adr30s[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetADRatio1m(unsigned int lead)
+{
+    if(cal_adr_index-lead>=GAP1M)
+    {
+        return adr1m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetADRatio2m(unsigned int lead)
+{
+    if(cal_adr_index-lead>=GAP2M)
+    {
+        return adr2m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetADRatio3m(unsigned int lead)
+{
+    if(cal_adr_index-lead>=GAP3M)
+    {
+        return adr3m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetADRatio5m(unsigned int lead)
+{
+    if(cal_adr_index>=GAP5M)
+    {
+        return adr5m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetADRatio10m(unsigned int lead)
+{
+    if(cal_adr_index-lead>=GAP10M)
+    {
+        return adr10m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetADRatio20m(unsigned int lead)
+{
+    if(cal_adr_index-lead>=GAP20M)
+    {
+        return adr20m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetADRatio30m(unsigned int lead)
+{
+    if(cal_adr_index-lead>=GAP30M)
+    {
+        return adr30m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetADRatio60m(unsigned int lead)
+{
+    if(cal_adr_index-lead>=GAP60M)
+    {
+        return adr60m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
     }
 }
 

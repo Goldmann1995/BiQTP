@@ -9,6 +9,7 @@
 #pragma once
 
 #define RING_SIZE   (24*60*12)
+#define ST_SIZE     100
 
 #define PRECISION0  "1.00000000"
 #define PRECISION1  "0.10000000"
@@ -45,11 +46,32 @@ public:
 
     void SetSymbolName(const std::string& symbol);
     const std::string& GetSymbolName();
+    void SetBuyIndex(int stidx);
+    void ClearBuyIndex(int stidx);
+    int GetBuyIndex(int stidx);
+    void SetSellIndex(int stidx);
+    int GetSellIndex(int stidx);
+    int GetSellGap(int stidx);
+    void ClearSellIndex(int stidx);
+    double GetProfit(int stidx, double base);
 
+    // 更新行情
     void PushMD(double last_price);
+    // 计算因子
     void CalMovingAverage();
     void CalADRatio();
+    // 获取因子
+    double GetADRatio30s(unsigned int lead);
+    double GetADRatio1m(unsigned int lead);
+    double GetADRatio2m(unsigned int lead);
+    double GetADRatio3m(unsigned int lead);
+    double GetADRatio5m(unsigned int lead);
+    double GetADRatio10m(unsigned int lead);
+    double GetADRatio20m(unsigned int lead);
+    double GetADRatio30m(unsigned int lead);
+    double GetADRatio60m(unsigned int lead);
 
+    // 初始化Binance交易参数
     void SetMinPrice(const std::string& price);
     void SetMaxPrice(const std::string& price);
     void SetTickSize(const std::string& size);
@@ -66,8 +88,8 @@ private:
     int md_index;
     int cal_ma_index;
     int cal_adr_index;
-    int buy_index;
-    int sell_index;
+    int buy_index[ST_SIZE];
+    int sell_index[ST_SIZE];
     int cycle_cnt;
 
     // 5s最新价
