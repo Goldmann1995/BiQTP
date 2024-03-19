@@ -20,15 +20,21 @@ public:
     MDRing();
     ~MDRing();
 
+    // Interface
     void SetSymbolName(const std::string& symbol);
     const std::string& GetSymbolName();
+
+    // ~
     void SetBuyIndex(int stidx);
     void ClearBuyIndex(int stidx);
     int GetBuyIndex(int stidx);
+    bool EstimateBuyMax(int stidx);
+    // ~
     void SetSellIndex(int stidx);
+    void ClearSellIndex(int stidx);
     int GetSellIndex(int stidx);
     int GetSellDuration(int stidx);
-    void ClearSellIndex(int stidx);
+    // ~
     double GetProfit(int stidx, double base);
 
     // 更新行情
@@ -46,6 +52,10 @@ public:
     double GetADRatio20m(unsigned int lead);
     double GetADRatio30m(unsigned int lead);
     double GetADRatio60m(unsigned int lead);
+    // 获取因子
+    double GetMA5m(unsigned int lead);
+    double GetMA25m(unsigned int lead);
+    double GetMA100m(unsigned int lead);
 
     // 初始化Binance交易参数
     void SetMinPrice(const std::string& price);

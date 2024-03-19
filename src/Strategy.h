@@ -34,6 +34,8 @@ private:
     // 注册友元派生策略
     friend class AdvancedSLR1;
     friend class AdvancedSLR2;
+    friend class MACross1;
+    friend class MACross2;
 };
 
 //############################################################//
@@ -54,6 +56,28 @@ class AdvancedSLR2 : public Strategy
 public:
     AdvancedSLR2(int id, double captical);
     ~AdvancedSLR2();
+
+    void Run();
+};
+
+//############################################################//
+
+class MACross1 : public Strategy
+{
+public:
+    MACross1(int id, double captical);
+    ~MACross1();
+
+    void Run();
+};
+
+//############################################################//
+
+class MACross2 : public Strategy
+{
+public:
+    MACross2(int id, double captical);
+    ~MACross2();
 
     void Run();
 };

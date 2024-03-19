@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 #include <log/log.h>
 
@@ -69,9 +70,30 @@ int MDRing::GetBuyIndex(int stidx)
     return buy_index[stidx];
 }
 
+bool MDRing::EstimateBuyMax(int stidx)
+{
+    double max_price = 0.0;
+    for(int i=buy_index[stidx]; ; i++)
+    {
+        int index = i%RING_SIZE;
+        max_price = std::max(max_price, price[index]);
+        if(index == md_index)
+            break;
+    }
+    if( max_price > price[md_index] )
+        return true;
+    else
+        return false;
+}
+
 void MDRing::SetSellIndex(int stidx)
 {
     sell_index[stidx] = cal_adr_index;
+}
+
+void MDRing::ClearSellIndex(int stidx)
+{
+    sell_index[stidx] = -1;
 }
 
 int MDRing::GetSellIndex(int stidx)
@@ -82,11 +104,6 @@ int MDRing::GetSellIndex(int stidx)
 int MDRing::GetSellDuration(int stidx)
 {
     return cal_adr_index-sell_index[stidx];
-}
-
-void MDRing::ClearSellIndex(int stidx)
-{
-    sell_index[stidx] = -1;
 }
 
 double MDRing::GetProfit(int stidx, double base)
@@ -427,6 +444,42 @@ double MDRing::GetADRatio60m(unsigned int lead)
     if(cal_adr_index-lead>=INTERVAL60M)
     {
         return adr60m[cal_adr_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetMA5m(unsigned int lead)
+{
+    if(cal_ma_index-lead > INTERVAL5M)
+    {
+        return ma5m[cal_ma_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetMA25m(unsigned int lead)
+{
+    if(cal_ma_index-lead > INTERVAL25M)
+    {
+        return ma25m[cal_ma_index-lead];
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+double MDRing::GetMA100m(unsigned int lead)
+{
+    if(cal_ma_index-lead > INTERVAL100M)
+    {
+        return ma100m[cal_ma_index-lead];
     }
     else
     {

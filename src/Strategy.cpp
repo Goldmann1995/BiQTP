@@ -77,18 +77,22 @@ void AdvancedSLR1::Run()
 
         if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
         {
+            //if(mdring[symbol_iter.second].EstimateBuyMax(mStrategyID))
             if(adr30s<0.0)
             {
                 double profit = mdring[symbol_iter.second].GetProfit(mStrategyID, mCapital);
                 mdring[symbol_iter.second].ClearBuyIndex(mStrategyID);
+                mdring[symbol_iter.second].SetSellIndex(mStrategyID);
+
                 mTotalProfit += profit;
                 mTotalCommission += 2*mCapital/1000.0;
-                LOG_DEBUG("AdvancedSLR1::Run() SellSignal # Symbol: %s Profit: %f Total: %f ", \
-                           symbol_iter.first.c_str(), profit, mTotalProfit-mTotalCommission);
+                LOG_DEBUG("AdvancedSLR1::Run() SellSignal # Symbol: %s Profit: %f Total: %f Commission: %f", \
+                           symbol_iter.first.c_str(), profit, mTotalProfit, mTotalCommission);
             }
         }
 
-        if(adr30s>0.01 && adr1m >0.018)
+        if( adr30s>0.01 && adr1m >0.018 && \
+            mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 10 )
         {
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {
@@ -131,26 +135,148 @@ void AdvancedSLR2::Run()
 
         if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
         {
+            //if(mdring[symbol_iter.second].EstimateBuyMax(mStrategyID))
             if(adr30s<0.0)
             {
                 double profit = mdring[symbol_iter.second].GetProfit(mStrategyID, mCapital);
                 mdring[symbol_iter.second].ClearBuyIndex(mStrategyID);
                 mdring[symbol_iter.second].SetSellIndex(mStrategyID);
+
                 mTotalProfit += profit;
                 mTotalCommission += 2*mCapital/1000.0;
-                LOG_DEBUG("Strategy::AdvancedSLR2() SellSignal # Symbol: %s Profit: %f Total: %f ", \
-                           symbol_iter.first.c_str(), profit, mTotalProfit-mTotalCommission);
+                LOG_DEBUG("AdvancedSLR2::Run() SellSignal # Symbol: %s Profit: %f Total: %f Commission: %f", \
+                           symbol_iter.first.c_str(), profit, mTotalProfit, mTotalCommission);
             }
         }
 
-        if( adr1m>0.003 && adr2m >0.006 && adr3m >0.012 && adr5m >0.02 &&\
-            mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 6 )
+        if( adr1m>0.003 && adr2m >0.006 && adr3m >0.012 && adr5m >0.02 && \
+            mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 10 )
         {
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {
                 mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
-                LOG_DEBUG("Strategy::AdvancedSLR2() BuySignal # Symbol: %s ADR_1m: %f ADR_2m: %f ADR_3m: %f ADR_5m: %f", \
+                LOG_DEBUG("AdvancedSLR2::Run() BuySignal # Symbol: %s ADR_1m: %f ADR_2m: %f ADR_3m: %f ADR_5m: %f", \
                            symbol_iter.first.c_str(), adr1m, adr2m, adr3m, adr5m);
+            }
+        }
+    }
+}
+
+//##################################################//
+//   MACross1
+//##################################################//
+
+MACross1::MACross1(int id, double captical)
+{
+    mStrategyID = id;
+    mCapital = captical;
+}
+
+MACross1::~MACross1()
+{
+    //
+}
+
+void MACross1::Run()
+{
+    nowTime = std::chrono::steady_clock::now();
+    std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
+    if( start_time < std::chrono::seconds(1800) )
+        return;
+    
+    for(const auto& symbol_iter:symbolUMap)
+    {
+        double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
+        double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
+        double adr2m = mdring[symbol_iter.second].GetADRatio2m(0);
+        double adr3m = mdring[symbol_iter.second].GetADRatio3m(0);
+
+        double ma5m = mdring[symbol_iter.second].GetMA5m(0);
+        double ma25m = mdring[symbol_iter.second].GetMA25m(0);
+        double ma5mp = mdring[symbol_iter.second].GetMA5m(20);
+        double ma25mp = mdring[symbol_iter.second].GetMA25m(20);
+
+        if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
+        {
+            if( ((ma5m-ma25m)<0.000001 && (ma5m-ma5mp)<0) || \
+                adr30s<-0.002 || adr1m<-0.003 || adr2m <-0.006 || adr3m <-0.01 )
+            {
+                double profit = mdring[symbol_iter.second].GetProfit(mStrategyID, mCapital);
+                mdring[symbol_iter.second].ClearBuyIndex(mStrategyID);
+                mdring[symbol_iter.second].SetSellIndex(mStrategyID);
+
+                mTotalProfit += profit;
+                mTotalCommission += (mCapital/1000.0)*2;
+                LOG_DEBUG("MACross1::Run() SellSignal # Symbol: %s Profit: %f Total: %f Commission: %f", \
+                           symbol_iter.first.c_str(), profit, mTotalProfit, mTotalCommission);
+            }
+        }
+
+        if( (ma5m-ma25m)<0.000001 && (ma5m-ma5mp)>0 && (ma25m-ma25mp)>0 && \
+            adr1m>0.003 && adr2m >0.006 && adr3m >0.01 && \
+            mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 10 )
+        {
+            if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
+            {
+                mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
+                LOG_DEBUG("MACross1::Run() BuySignal # Symbol: %s", symbol_iter.first.c_str());
+            }
+        }
+    }
+}
+
+//##################################################//
+//   MACross2
+//##################################################//
+
+MACross2::MACross2(int id, double captical)
+{
+    mStrategyID = id;
+    mCapital = captical;
+}
+
+MACross2::~MACross2()
+{
+    //
+}
+
+void MACross2::Run()
+{
+    nowTime = std::chrono::steady_clock::now();
+    std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
+    if( start_time < std::chrono::seconds(6060) )
+        return;
+    
+    for(const auto& symbol_iter:symbolUMap)
+    {
+        double ma25m = mdring[symbol_iter.second].GetMA25m(0);
+        double ma100m = mdring[symbol_iter.second].GetMA100m(0);
+        double ma25m_p = mdring[symbol_iter.second].GetMA25m(20);
+        double ma100m_p = mdring[symbol_iter.second].GetMA100m(20);
+
+        if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
+        {
+            if( (ma25m-ma100m)<0.000001 && (ma25m-ma25m_p)<0 )
+            {
+                double profit = mdring[symbol_iter.second].GetProfit(mStrategyID, mCapital);
+                mdring[symbol_iter.second].ClearBuyIndex(mStrategyID);
+                mdring[symbol_iter.second].SetSellIndex(mStrategyID);
+
+                mTotalProfit += profit;
+                mTotalCommission += (mCapital/1000.0)*2;
+                LOG_DEBUG("MACross2::Run() SellSignal # Symbol: %s Profit: %f Total: %f Commission: %f", \
+                           symbol_iter.first.c_str(), profit, mTotalProfit, mTotalCommission);
+            }
+        }
+
+        if( (ma25m-ma100m)<0.000001 && (ma25m-ma25m_p)>0 && (ma100m-ma100m_p)>0 && \
+            (ma25m-ma25m_p) > (ma100m-ma100m_p) && \
+            mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 20 )
+        {
+            if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
+            {
+                mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
+                LOG_DEBUG("MACross2::Run() BuySignal # Symbol: %s", symbol_iter.first.c_str());
             }
         }
     }

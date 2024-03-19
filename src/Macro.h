@@ -56,8 +56,10 @@
 
 /********** StrategyID **********/
 
-#define ASLR1   0
-#define ASLR2   1
+#define ASLR1     0
+#define ASLR2     1
+#define MACROSS1   2
+#define MACROSS2   3
 
 
 /********** Strategy AdvancedSLR1 **********/
