@@ -18,12 +18,11 @@
 #include <rapidjson/document.h>
 #include <log/log.h>
 
-//#include "log.h"
-#include "MDReceiver.h"
+#include "Macro.h"
 #include "MDRing.h"
+#include "MDReceiver.h"
 
-#define TOTAL_SYMBOL   600
-
+// Extern
 extern std::unordered_map<std::string, int> symbolUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
 
@@ -32,7 +31,7 @@ std::string MDReceiver::mCurlBuffer;
 
 
 //##################################################//
-//   Init
+//   Constructor
 //##################################################//
 MDReceiver::MDReceiver(const std::string& url)
 {
@@ -55,7 +54,7 @@ MDReceiver::MDReceiver(const std::string& url)
 }
 
 //##################################################//
-//   ~
+//   Destructor
 //##################################################//
 MDReceiver::~MDReceiver()
 {
@@ -94,7 +93,7 @@ void MDReceiver::Run()
 }
 
 //##################################################//
-//   ~
+//   请求所有币种最新价格
 //##################################################//
 int MDReceiver::RequestAllPrice()
 {

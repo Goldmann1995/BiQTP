@@ -1,5 +1,5 @@
 ﻿/*
- * File:        Strategy.cpp
+ * File:        StrategyBOX.cpp
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-19
  * LastEdit:    2024-03-19
@@ -18,11 +18,11 @@
 #include <rapidjson/document.h>
 #include <log/log.h>
 
-#include "Strategy.h"
+#include "Macro.h"
 #include "MDRing.h"
+#include "StrategyBOX.h"
 
-#define TOTAL_SYMBOL   600
-
+// Extern
 extern std::unordered_map<std::string, int> symbolUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
 
@@ -30,7 +30,7 @@ extern MDRing mdring[TOTAL_SYMBOL];
 //##################################################//
 //   Constructor
 //##################################################//
-Strategy::Strategy()
+StrategyBOX::StrategyBOX()
 {
     startTime = std::chrono::steady_clock::now();
     runTime = std::chrono::steady_clock::now();
@@ -40,7 +40,7 @@ Strategy::Strategy()
 //##################################################//
 //   Destructor
 //##################################################//
-Strategy::~Strategy()
+StrategyBOX::~StrategyBOX()
 {
     // ~
 }
@@ -48,7 +48,7 @@ Strategy::~Strategy()
 //##################################################//
 //   线程运行实体
 //##################################################//
-void Strategy::Run()
+void StrategyBOX::Run()
 {
     struct timespec time_to_sleep;
     time_to_sleep.tv_sec  = 0;
@@ -86,7 +86,7 @@ void Strategy::Run()
 //##################################################//
 //   ~
 //##################################################//
-void Strategy::AdvancedSLR1()
+void StrategyBOX::AdvancedSLR1()
 {
     for(const auto& symbol_iter:symbolUMap)
     {
@@ -105,7 +105,7 @@ void Strategy::AdvancedSLR1()
             }
         }
 
-        if(adr30s>0.01 && adr1m >0.015)
+        if(adr30s>0.01 && adr1m >0.018)
         {
             if(mdring[symbol_iter.second].GetBuyIndex(ASLR1)<0)
             {
@@ -120,7 +120,7 @@ void Strategy::AdvancedSLR1()
 //##################################################//
 //   ~
 //##################################################//
-void Strategy::AdvancedSLR2()
+void StrategyBOX::AdvancedSLR2()
 {
     for(const auto& symbol_iter:symbolUMap)
     {
@@ -143,7 +143,7 @@ void Strategy::AdvancedSLR2()
             }
         }
 
-        if( adr1m>0.002 && adr2m >0.004 && adr3m >0.006 && adr5m >0.01 &&\
+        if( adr1m>0.003 && adr2m >0.006 && adr3m >0.012 && adr5m >0.02 &&\
             mdring[symbol_iter.second].GetSellGap(ASLR2) > 6 )
         {
             if(mdring[symbol_iter.second].GetBuyIndex(ASLR2)<0)

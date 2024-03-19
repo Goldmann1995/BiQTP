@@ -1,5 +1,5 @@
 ﻿/*
- * File:        Strategy.h
+ * File:        StrategyBOX.h
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-19
  * LastEdit:    2024-03-19
@@ -8,20 +8,17 @@
 
 #pragma once
 
-#define ASLR1   0
-#define ASLR2   1
-
 #include <ThreadBase.h>
 
 
 //############################################################//
-//   Strategy Class
+//   StrategyBOX Class
 //############################################################//
-class Strategy: public ThreadBase
+class StrategyBOX: public ThreadBase
 {
 public:
-    Strategy();
-    ~Strategy();
+    StrategyBOX();
+    ~StrategyBOX();
 
     // 线程运行实体
     void Run();
@@ -39,4 +36,4 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> nowTime;
 };
 
-//##################################################//
+//############################################################//
