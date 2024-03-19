@@ -21,7 +21,7 @@
 
 /********** RingMD **********/
 
-#define RING_SIZE   (24*60*12)
+#define RING_SIZE   (24*60*20)
 
 #define PRECISION0  "1.00000000"
 #define PRECISION1  "0.10000000"
@@ -33,23 +33,37 @@
 #define PRECISION7  "0.00000010"
 #define PRECISION8  "0.00000001"
 
-#define GAP30S  (6)
-#define GAP1M  (12)
-#define GAP2M  (12*2)
-#define GAP3M  (12*3)
-#define GAP5M  (12*5)
-#define GAP10M  (12*10)
-#define GAP20M  (12*20)
-#define GAP25M  (12*25)
-#define GAP30M  (12*30)
-#define GAP60M  (12*60)
-#define GAP100M  (12*100)
+#define INTERVAL30S   10
+#define INTERVAL1M    20
+#define INTERVAL2M    (20*2)
+#define INTERVAL3M    (20*3)
+#define INTERVAL5M    (20*5)
+#define INTERVAL10M   (20*10)
+#define INTERVAL20M   (20*20)
+#define INTERVAL25M   (20*25)
+#define INTERVAL30M   (20*30)
+#define INTERVAL60M   (20*60)
+#define INTERVAL100M  (20*100)
+#define INTERVAL120M  (20*120)
+#define INTERVAL180M  (20*180)
+#define INTERVAL240M  (20*240)
 
 
-/********** Strategy **********/
+/********** MDReceiver **********/
+
+#define REQ_TIME_INTERVAL   3
+
+
+/********** StrategyID **********/
 
 #define ASLR1   0
 #define ASLR2   1
+
+
+/********** Strategy AdvancedSLR1 **********/
+
+
+/********** Strategy AdvancedSLR2 **********/
 
 
 /************************************/

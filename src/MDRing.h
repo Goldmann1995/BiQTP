@@ -18,7 +18,6 @@ class MDRing
 {
 public:
     MDRing();
-    //MDRing(const std::string& symbol);
     ~MDRing();
 
     void SetSymbolName(const std::string& symbol);
@@ -28,7 +27,7 @@ public:
     int GetBuyIndex(int stidx);
     void SetSellIndex(int stidx);
     int GetSellIndex(int stidx);
-    int GetSellGap(int stidx);
+    int GetSellDuration(int stidx);
     void ClearSellIndex(int stidx);
     double GetProfit(int stidx, double base);
 

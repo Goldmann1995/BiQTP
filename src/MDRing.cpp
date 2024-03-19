@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <string>
+
 #include <log/log.h>
 
 #include "MDRing.h"
@@ -78,7 +79,7 @@ int MDRing::GetSellIndex(int stidx)
     return sell_index[stidx];
 }
 
-int MDRing::GetSellGap(int stidx)
+int MDRing::GetSellDuration(int stidx)
 {
     return cal_adr_index-sell_index[stidx];
 }
@@ -103,16 +104,18 @@ void MDRing::PushMD(double last_price)
     if(md_index+1==RING_SIZE)
         cycle_cnt++;
     md_index=index;
-
-    //LOG_DEBUG("MDRing::PushMD() Symbol: %s Index: %d Price: %f",  mSymbol.c_str(), index, last_price);
 }
 
+//##################################################//
+//   计算移动平均值
+//##################################################//
 void MDRing::CalMovingAverage()
 {
     if(cal_ma_index==md_index)
         return;
     else   // cal_ma_index
     {
+        // tips summer@20240319 - [0]位并没有值
         int next_index = cal_ma_index+1%RING_SIZE;
         mt5m += price[next_index];
         mt25m += price[next_index];
@@ -120,59 +123,57 @@ void MDRing::CalMovingAverage()
 
         if(cycle_cnt == 0)
         {
-            if(next_index>=GAP5M)
+            if(next_index > INTERVAL5M)
             {
-                mt5m -= price[next_index-GAP5M];
-                ma5m[next_index] = mt5m/GAP5M;
-
-                //LOG_DEBUG("MDRing::CalMovingAverage() Symbol: %s MA5: %f",  mSymbol.c_str(), ma5m[next_index]);
+                mt5m -= price[next_index-INTERVAL5M];
+                ma5m[next_index] = mt5m/INTERVAL5M;
             }
 
-            if(next_index>=GAP25M)
+            if(next_index > INTERVAL25M)
             {
-                mt25m -= price[next_index-GAP25M];
-                ma25m[next_index] = mt25m/GAP25M;
+                mt25m -= price[next_index-INTERVAL25M];
+                ma25m[next_index] = mt25m/INTERVAL25M;
             }
 
-            if(next_index>=GAP100M)
+            if(next_index > INTERVAL100M)
             {
-                mt100m -= price[next_index-GAP100M];
-                ma100m[next_index] = mt100m/GAP100M;
+                mt100m -= price[next_index-INTERVAL100M];
+                ma100m[next_index] = mt100m/INTERVAL100M;
             }
         }
         else
         {
-            if(next_index>=GAP5M)
+            if(next_index > INTERVAL5M)
             {
-                mt5m -= price[next_index-GAP5M];
-                ma5m[next_index] = mt5m/GAP5M;
+                mt5m -= price[next_index-INTERVAL5M];
+                ma5m[next_index] = mt5m/INTERVAL5M;
             }
             else
             {
-                mt5m -= price[RING_SIZE-GAP5M-next_index];
-                ma5m[next_index] = mt5m/GAP5M; 
+                mt5m -= price[RING_SIZE-INTERVAL5M-next_index];
+                ma5m[next_index] = mt5m/INTERVAL5M; 
             }
 
-            if(next_index>=GAP25M)
+            if(next_index > INTERVAL25M)
             {
-                mt25m -= price[next_index-GAP25M];
-                ma25m[next_index] = mt25m/GAP25M;
+                mt25m -= price[next_index-INTERVAL25M];
+                ma25m[next_index] = mt25m/INTERVAL25M;
             }
             else
             {
-                mt25m -= price[RING_SIZE-GAP25M-next_index];
-                ma25m[next_index] = mt25m/GAP25M; 
+                mt25m -= price[RING_SIZE-INTERVAL25M-next_index];
+                ma25m[next_index] = mt25m/INTERVAL25M; 
             }
 
-            if(next_index>=GAP100M)
+            if(next_index > INTERVAL100M)
             {
-                mt100m -= price[next_index-GAP100M];
-                ma100m[next_index] = mt100m/GAP100M;
+                mt100m -= price[next_index-INTERVAL100M];
+                ma100m[next_index] = mt100m/INTERVAL100M;
             }
             else
             {
-                mt100m -= price[RING_SIZE-GAP100M-next_index];
-                ma100m[next_index] = mt100m/GAP100M; 
+                mt100m -= price[RING_SIZE-INTERVAL100M-next_index];
+                ma100m[next_index] = mt100m/INTERVAL100M; 
             }
         }
 
@@ -186,138 +187,137 @@ void MDRing::CalADRatio()
         return;
     else   // cal_adr_index
     {
+        // tips summer@20240319 - [0]位并没有值
         int next_index = cal_adr_index+1%RING_SIZE;
 
         if(cycle_cnt == 0)
         {
-            if(next_index>=GAP30S)
+            if(next_index > INTERVAL30S)
             {
-                adr30s[next_index] = (price[next_index]-price[next_index-GAP30S])/price[next_index-GAP30S];
-
-                //LOG_DEBUG("MDRing::CalMovingAverage() Symbol: %s ADR30S: %f",  mSymbol.c_str(), adr30s[next_index]);
+                adr30s[next_index] = (price[next_index]-price[next_index-INTERVAL30S])/price[next_index-INTERVAL30S];
             }
 
-            if(next_index>=GAP1M)
+            if(next_index > INTERVAL1M)
             {
-                adr1m[next_index] = (price[next_index]-price[next_index-GAP1M])/price[next_index-GAP1M];
+                adr1m[next_index] = (price[next_index]-price[next_index-INTERVAL1M])/price[next_index-INTERVAL1M];
             }
 
-            if(next_index>=GAP2M)
+            if(next_index > INTERVAL2M)
             {
-                adr2m[next_index] = (price[next_index]-price[next_index-GAP2M])/price[next_index-GAP2M];
+                adr2m[next_index] = (price[next_index]-price[next_index-INTERVAL2M])/price[next_index-INTERVAL2M];
             }
 
-            if(next_index>=GAP3M)
+            if(next_index > INTERVAL3M)
             {
-                adr3m[next_index] = (price[next_index]-price[next_index-GAP3M])/price[next_index-GAP3M];
+                adr3m[next_index] = (price[next_index]-price[next_index-INTERVAL3M])/price[next_index-INTERVAL3M];
             }
 
-            if(next_index>=GAP5M)
+            if(next_index > INTERVAL5M)
             {
-                adr5m[next_index] = (price[next_index]-price[next_index-GAP5M])/price[next_index-GAP5M];
+                adr5m[next_index] = (price[next_index]-price[next_index-INTERVAL5M])/price[next_index-INTERVAL5M];
             }
 
-            if(next_index>=GAP10M)
+            if(next_index > INTERVAL10M)
             {
-                adr10m[next_index] = (price[next_index]-price[next_index-GAP10M])/price[next_index-GAP10M];
+                adr10m[next_index] = (price[next_index]-price[next_index-INTERVAL10M])/price[next_index-INTERVAL10M];
             }
 
-            if(next_index>=GAP20M)
+            if(next_index > INTERVAL20M)
             {
-                adr20m[next_index] = (price[next_index]-price[next_index-GAP20M])/price[next_index-GAP20M];
+                adr20m[next_index] = (price[next_index]-price[next_index-INTERVAL20M])/price[next_index-INTERVAL20M];
             }
 
-            if(next_index>=GAP30M)
+            if(next_index > INTERVAL30M)
             {
-                adr30m[next_index] = (price[next_index]-price[next_index-GAP30M])/price[next_index-GAP30M];
+                adr30m[next_index] = (price[next_index]-price[next_index-INTERVAL30M])/price[next_index-INTERVAL30M];
             }
 
-            if(next_index>=GAP60M)
+            if(next_index > INTERVAL60M)
             {
-                adr60m[next_index] = (price[next_index]-price[next_index-GAP60M])/price[next_index-GAP60M];
+                adr60m[next_index] = (price[next_index]-price[next_index-INTERVAL60M])/price[next_index-INTERVAL60M];
             }
         }
         else
         {
-            if(next_index>=GAP30S)
+            if(next_index > INTERVAL30S)
             {
-                adr30s[next_index] = (price[next_index]-price[next_index-GAP30S])/price[next_index-GAP30S];
+                adr30s[next_index] = (price[next_index]-price[next_index-INTERVAL30S])/price[next_index-INTERVAL30S];
             }
             else
             {
-                adr30s[next_index] = (price[next_index]-price[RING_SIZE-GAP30S+next_index])/price[RING_SIZE-GAP30S+next_index];
+                adr30s[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL30S+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL30S+next_index];
             }
 
-            if(next_index>=GAP1M)
+            if(next_index > INTERVAL1M)
             {
-                adr1m[next_index] = (price[next_index]-price[next_index-GAP1M])/price[next_index-GAP1M];
+                adr1m[next_index] = (price[next_index]-price[next_index-INTERVAL1M])/price[next_index-INTERVAL1M];
             }
             else
             {
-                adr1m[next_index] = (price[next_index]-price[RING_SIZE-GAP1M+next_index])/price[RING_SIZE-GAP1M+next_index];
+                adr1m[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL1M+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL1M+next_index];
             }
 
-            if(next_index>=GAP2M)
+            if(next_index > INTERVAL2M)
             {
-                adr2m[next_index] = (price[next_index]-price[next_index-GAP2M])/price[next_index-GAP2M];
+                adr2m[next_index] = (price[next_index]-price[next_index-INTERVAL2M])/price[next_index-INTERVAL2M];
             }
             else
             {
-                adr2m[next_index] = (price[next_index]-price[RING_SIZE-GAP2M+next_index])/price[RING_SIZE-GAP2M+next_index];
+                adr2m[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL2M+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL2M+next_index];
             }
 
-            if(next_index>=GAP3M)
+            if(next_index > INTERVAL3M)
             {
-                adr3m[next_index] = (price[next_index]-price[next_index-GAP3M])/price[next_index-GAP3M];
+                adr3m[next_index] = (price[next_index]-price[next_index-INTERVAL3M])/price[next_index-INTERVAL3M];
             }
             else
             {
-                adr3m[next_index] = (price[next_index]-price[RING_SIZE-GAP3M+next_index])/price[RING_SIZE-GAP3M+next_index];
+                adr3m[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL3M+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL3M+next_index];
             }
 
-            if(next_index>=GAP5M)
+            if(next_index > INTERVAL5M)
             {
-                adr5m[next_index] = (price[next_index]-price[next_index-GAP5M])/price[next_index-GAP5M];
+                adr5m[next_index] = (price[next_index]-price[next_index-INTERVAL5M])/price[next_index-INTERVAL5M];
             }
             else
             {
-                adr5m[next_index] = (price[next_index]-price[RING_SIZE-GAP5M+next_index])/price[RING_SIZE-GAP5M+next_index];
+                adr5m[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL5M+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL5M+next_index];
             }
 
-            if(next_index>=GAP10M)
+            if(next_index > INTERVAL10M)
             {
-                adr10m[next_index] = (price[next_index]-price[next_index-GAP10M])/price[next_index-GAP10M];
+                adr10m[next_index] = (price[next_index]-price[next_index-INTERVAL10M])/price[next_index-INTERVAL10M];
             }
             else
             {
-                adr10m[next_index] = (price[next_index]-price[RING_SIZE-GAP10M+next_index])/price[RING_SIZE-GAP10M+next_index];
+                adr10m[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL10M+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL10M+next_index];
             }
 
-            if(next_index>=GAP20M)
+            if(next_index > INTERVAL20M)
             {
-                adr20m[next_index] = (price[next_index]-price[next_index-GAP20M])/price[next_index-GAP20M];
+                adr20m[next_index] = (price[next_index]-price[next_index-INTERVAL20M])/price[next_index-INTERVAL20M];
             }
             else
             {
-                adr20m[next_index] = (price[next_index]-price[RING_SIZE-GAP20M+next_index])/price[RING_SIZE-GAP20M+next_index];
+                adr20m[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL20M+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL20M+next_index];
             }
 
-            if(next_index>=GAP30M)
+            if(next_index > INTERVAL30M)
             {
-                adr30m[next_index] = (price[next_index]-price[next_index-GAP30M])/price[next_index-GAP30M];
+                adr30m[next_index] = (price[next_index]-price[next_index-INTERVAL30M])/price[next_index-INTERVAL30M];
             }
             else
             {
-                adr30m[next_index] = (price[next_index]-price[RING_SIZE-GAP30M+next_index])/price[RING_SIZE-GAP30M+next_index];
+                adr30m[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL30M+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL30M+next_index];
             }
 
-            if(next_index>=GAP60M)
+            if(next_index > INTERVAL60M)
             {
-                adr60m[next_index] = (price[next_index]-price[next_index-GAP60M])/price[next_index-GAP60M];
+                adr60m[next_index] = (price[next_index]-price[next_index-INTERVAL60M])/price[next_index-INTERVAL60M];
             }
             else
             {
-                adr60m[next_index] = (price[next_index]-price[RING_SIZE-GAP60M+next_index])/price[RING_SIZE-GAP60M+next_index];
+                adr60m[next_index] = (price[next_index]-price[(RING_SIZE-INTERVAL60M+next_index)%RING_SIZE])/price[RING_SIZE-INTERVAL60M+next_index];
             }
         }
 
@@ -328,7 +328,7 @@ void MDRing::CalADRatio()
 // tips summer@20240319 - 需要重写 考虑cycle
 double MDRing::GetADRatio30s(unsigned int lead)
 {
-    if(cal_adr_index-lead>=GAP30S)
+    if(cal_adr_index-lead>=INTERVAL30S)
     {
         return adr30s[cal_adr_index-lead];
     }
@@ -340,7 +340,7 @@ double MDRing::GetADRatio30s(unsigned int lead)
 
 double MDRing::GetADRatio1m(unsigned int lead)
 {
-    if(cal_adr_index-lead>=GAP1M)
+    if(cal_adr_index-lead>=INTERVAL1M)
     {
         return adr1m[cal_adr_index-lead];
     }
@@ -352,7 +352,7 @@ double MDRing::GetADRatio1m(unsigned int lead)
 
 double MDRing::GetADRatio2m(unsigned int lead)
 {
-    if(cal_adr_index-lead>=GAP2M)
+    if(cal_adr_index-lead>=INTERVAL2M)
     {
         return adr2m[cal_adr_index-lead];
     }
@@ -364,7 +364,7 @@ double MDRing::GetADRatio2m(unsigned int lead)
 
 double MDRing::GetADRatio3m(unsigned int lead)
 {
-    if(cal_adr_index-lead>=GAP3M)
+    if(cal_adr_index-lead>=INTERVAL3M)
     {
         return adr3m[cal_adr_index-lead];
     }
@@ -376,7 +376,7 @@ double MDRing::GetADRatio3m(unsigned int lead)
 
 double MDRing::GetADRatio5m(unsigned int lead)
 {
-    if(cal_adr_index>=GAP5M)
+    if(cal_adr_index>=INTERVAL5M)
     {
         return adr5m[cal_adr_index-lead];
     }
@@ -388,7 +388,7 @@ double MDRing::GetADRatio5m(unsigned int lead)
 
 double MDRing::GetADRatio10m(unsigned int lead)
 {
-    if(cal_adr_index-lead>=GAP10M)
+    if(cal_adr_index-lead>=INTERVAL10M)
     {
         return adr10m[cal_adr_index-lead];
     }
@@ -400,7 +400,7 @@ double MDRing::GetADRatio10m(unsigned int lead)
 
 double MDRing::GetADRatio20m(unsigned int lead)
 {
-    if(cal_adr_index-lead>=GAP20M)
+    if(cal_adr_index-lead>=INTERVAL20M)
     {
         return adr20m[cal_adr_index-lead];
     }
@@ -412,7 +412,7 @@ double MDRing::GetADRatio20m(unsigned int lead)
 
 double MDRing::GetADRatio30m(unsigned int lead)
 {
-    if(cal_adr_index-lead>=GAP30M)
+    if(cal_adr_index-lead>=INTERVAL30M)
     {
         return adr30m[cal_adr_index-lead];
     }
@@ -424,7 +424,7 @@ double MDRing::GetADRatio30m(unsigned int lead)
 
 double MDRing::GetADRatio60m(unsigned int lead)
 {
-    if(cal_adr_index-lead>=GAP60M)
+    if(cal_adr_index-lead>=INTERVAL60M)
     {
         return adr60m[cal_adr_index-lead];
     }

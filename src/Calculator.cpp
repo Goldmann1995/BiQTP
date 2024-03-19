@@ -64,14 +64,8 @@ void Calculator::Run()
         }
 
         int result = nanosleep(&time_to_sleep, NULL);
-        if( result == 0 )
-        {
-            //std::cout << "Slept for 1 second." << std::endl;
-        }
-        else
-        {
-            //std::cerr << "nanosleep failed." << std::endl;
-        }
+        if( result != 0 )
+            LOG_ERROR("Calculator::Run() %s ", "nanosleep() failed !");
 	}
 }
 

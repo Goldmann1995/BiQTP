@@ -144,7 +144,7 @@ void AdvancedSLR2::Run()
         }
 
         if( adr1m>0.003 && adr2m >0.006 && adr3m >0.012 && adr5m >0.02 &&\
-            mdring[symbol_iter.second].GetSellGap(mStrategyID) > 6 )
+            mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 6 )
         {
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {

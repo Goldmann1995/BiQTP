@@ -38,6 +38,7 @@ MDReceiver::MDReceiver(const std::string& url)
     mMdUrl = url;
     reqTime = std::chrono::steady_clock::now();
     nowTime = std::chrono::steady_clock::now();
+
     // Curl初始化
     mMdCurl = curl_easy_init();
     if(mMdCurl)
@@ -48,9 +49,7 @@ MDReceiver::MDReceiver(const std::string& url)
         curl_easy_setopt(mMdCurl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
     }
     else
-    {
-        std::cout << "MD CURL Init Fail!" << std::endl;
-    }
+        LOG_ERROR("MDReceiver::MDReceiver() %s ", "curl_easy_init() failed !");
 }
 
 //##################################################//
@@ -73,22 +72,16 @@ void MDReceiver::Run()
 	while( true )
 	{
         nowTime = std::chrono::steady_clock::now();
-        std::chrono::seconds elapsed = std::chrono::duration_cast<std::chrono::seconds>(nowTime - reqTime);
-        if( elapsed >= std::chrono::seconds(5) )
+        std::chrono::seconds elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - reqTime);
+        if( elapsed_time >= std::chrono::seconds(REQ_TIME_INTERVAL) )
         {
             reqTime = std::chrono::steady_clock::now();
             RequestAllPrice();
         }
 
         int result = nanosleep(&time_to_sleep, NULL);
-        if( result == 0 )
-        {
-            //std::cout << "Slept for 1 second." << std::endl;
-        }
-        else
-        {
-            //std::cerr << "nanosleep failed." << std::endl;
-        }
+        if( result != 0 )
+            LOG_ERROR("MDReceiver::Run() %s ", "nanosleep() failed !");
 	}
 }
 
@@ -105,22 +98,19 @@ int MDReceiver::RequestAllPrice()
     mCurlCode = curl_easy_perform(mMdCurl);
     if(mCurlCode != CURLE_OK)
     {
-        fprintf(stderr, "MDReceiver::curl_easy_perform() failed: %s\n", curl_easy_strerror(mCurlCode));
+        LOG_ERROR("MDReceiver::RequestAllPrice() %s ", "curl_easy_perform() failed !");
         return -1;
     }
     else
     {
-        // 打印JSON回报
-        //std::cout << mCurlBuffer << std::endl;
-
         rapidjson::Document jsondoc;
         rapidjson::ParseResult jsonret = jsondoc.Parse(mCurlBuffer.c_str());
         if(jsonret)
         {
             if( !jsondoc.IsArray() || jsondoc.Empty() )
             {
-                std::cerr << "'jsondoc' is not an array." << std::endl;
-                return -1;
+                LOG_ERROR("MDReceiver::RequestAllPrice() %s ", "jsondoc is not an array !");
+                return -2;
             }
 
             for(const auto& item : jsondoc.GetArray())
