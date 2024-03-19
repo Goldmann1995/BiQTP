@@ -31,6 +31,7 @@
 #include "BiIniter.h"
 #include "MDReceiver.h"
 #include "Calculator.h"
+#include "Strategy.h"
 #include "StrategyBOX.h"
 
 // Global
@@ -80,6 +81,10 @@ int main()
 
     // Strategy
     ptrStrategyBOX = new StrategyBOX();
+    AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1, 1000.0);
+    AdvancedSLR2 *aslr2 = new AdvancedSLR2(ASLR2, 1000.0);
+    ptrStrategyBOX->EntrustStrategy(aslr1);
+    ptrStrategyBOX->EntrustStrategy(aslr2);
     ptrStrategyBOX->Start();
 
     // Hold for Join

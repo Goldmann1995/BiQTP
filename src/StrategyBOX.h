@@ -3,12 +3,13 @@
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-19
  * LastEdit:    2024-03-19
- * Description: Strategy of Quanter
+ * Description: BOX of Strategy
  */
 
 #pragma once
 
 #include <ThreadBase.h>
+#include "Strategy.h"
 
 
 //############################################################//
@@ -23,17 +24,18 @@ public:
     // 线程运行实体
     void Run();
 
-    // Strategy
-    void AdvancedSLR1();
-    void AdvancedSLR2();
+    // Interface
+    void EntrustStrategy(Strategy *strategy);
 
 private:
-    double profit_ASLR1 = 0.0;
-    double profit_ASLR2 = 0.0;
+    double mTotalProfit;
+    double mTotalCommission;
 
-    std::chrono::time_point<std::chrono::steady_clock> startTime;
     std::chrono::time_point<std::chrono::steady_clock> runTime;
     std::chrono::time_point<std::chrono::steady_clock> nowTime;
+
+    // 策略集合
+    vector<Strategy*> strategyVec;
 };
 
 //############################################################//
