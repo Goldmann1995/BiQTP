@@ -12,19 +12,22 @@
 #include <string>
 #include <chrono>
 #include <unordered_map>
-
+// 3rd-lib
 #include <curl/curl.h>
 #include <rapidjson/document.h>
-#include <log/log.h>
-
-#include "BiIniter.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+// QTP
+#include "Macro.h"
 #include "RingBuffer.hpp"
 #include "MDRing.h"
+#include "BiIniter.h"
 
-#define TOTAL_SYMBOL   600
-
+// Extern
 extern std::unordered_map<std::string, int> symbolUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
+extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
 
 // Static
@@ -91,7 +94,7 @@ void BiIniter::InitSymbolUMap()
                 {
                     symbolUMap.insert(make_pair(symbol, index));
                     mdring[index].SetSymbolName(symbol);
-                    LOG_INFO("BiIniter::UpdateSymbolFilter() Symbol: %s Index: %d  ", symbol.c_str(), index);
+                    sptrAsyncLogger->info("BiIniter::UpdateSymbolFilter() Symbol: {} Index: {}", symbol, index);
                     index++;
                 }
             }

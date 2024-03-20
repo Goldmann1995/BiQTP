@@ -56,6 +56,9 @@
         "variant": "cpp",
         "vector": "cpp",
         "algorithm": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "condition_variable": "cpp",
+        "span": "cpp",
+        "stack": "cpp"
     }
 }
