@@ -23,7 +23,6 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include <log/log.h>
 #include <inih/INIReader.h>
 
 #include <Utils.h>
@@ -76,9 +75,6 @@ int main(int argc, char *argv[])
         std::cout << "INI Init Error !" << std::endl;
         return -1;
     }
-
-    // 初始化Log
-    Log::get_instance()->init("/home/Binance/BiQTP/log/Log", 1024, 5000000);
 
     /********** 初始化spdlog **********/
     // 默认队列大小8192 后台线程1

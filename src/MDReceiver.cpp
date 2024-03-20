@@ -16,7 +16,9 @@
 
 #include <curl/curl.h>
 #include <rapidjson/document.h>
-#include <log/log.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include "Macro.h"
 #include "MDRing.h"
@@ -25,6 +27,7 @@
 // Extern
 extern std::unordered_map<std::string, int> symbolUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
+extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
 // Static
 std::string MDReceiver::mCurlBuffer;
@@ -49,7 +52,7 @@ MDReceiver::MDReceiver(const std::string& url)
         curl_easy_setopt(mMdCurl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
     }
     else
-        LOG_ERROR("MDReceiver::MDReceiver() %s ", "curl_easy_init() failed !");
+        sptrAsyncLogger->error("MDReceiver::MDReceiver() curl_easy_init() failed !");
 }
 
 //##################################################//
@@ -81,7 +84,7 @@ void MDReceiver::Run()
 
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )
-            LOG_ERROR("MDReceiver::Run() %s ", "nanosleep() failed !");
+            sptrAsyncLogger->error("MDReceiver::Run() nanosleep() failed !");
 	}
 }
 
@@ -98,7 +101,7 @@ int MDReceiver::RequestAllPrice()
     mCurlCode = curl_easy_perform(mMdCurl);
     if(mCurlCode != CURLE_OK)
     {
-        LOG_ERROR("MDReceiver::RequestAllPrice() %s ", "curl_easy_perform() failed !");
+        sptrAsyncLogger->error("MDReceiver::RequestAllPrice() curl_easy_perform() failed !");
         return -1;
     }
     else
@@ -109,7 +112,7 @@ int MDReceiver::RequestAllPrice()
         {
             if( !jsondoc.IsArray() || jsondoc.Empty() )
             {
-                LOG_ERROR("MDReceiver::RequestAllPrice() %s ", "jsondoc is not an array !");
+                sptrAsyncLogger->error("MDReceiver::RequestAllPrice() jsondoc is not an array !");
                 return -2;
             }
 

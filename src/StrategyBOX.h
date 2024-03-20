@@ -35,7 +35,7 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> nowTime;
 
     // 策略集合
-    vector<Strategy*> strategyVec;
+    std::vector<Strategy*> strategyVec;
 };
 
 //############################################################//

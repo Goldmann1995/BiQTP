@@ -18,7 +18,9 @@
 
 #include <curl/curl.h>
 #include <rapidjson/document.h>
-#include <log/log.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include "Macro.h"
 #include "MDRing.h"
@@ -27,6 +29,7 @@
 // Extern
 //extern std::unordered_map<std::string, int> symbolUMap;
 //extern MDRing mdring[TOTAL_SYMBOL];
+extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
 
 //##################################################//
@@ -72,7 +75,7 @@ void StrategyBOX::Run()
 
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )
-            LOG_ERROR("StrategyBOX::Run() %s ", "nanosleep failed !");
+            sptrAsyncLogger->error("StrategyBOX::Run() nanosleep() failed !");
 	}
 }
 

@@ -59,6 +59,8 @@
         "chrono": "cpp",
         "condition_variable": "cpp",
         "span": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "list": "cpp",
+        "set": "cpp"
     }
 }

@@ -9,7 +9,7 @@ all: buildproj
 
 #####   QTP_MACRO   #####
 QTP_SRC = lib/inih/ini.c lib/inih/INIReader.cpp \
-		  lib/log/log.cpp include/ThreadBase.cpp \
+		  include/ThreadBase.cpp \
 		  src/MDRing.cpp src/MDReceiver.cpp src/Calculator.cpp src/Strategy.cpp src/StrategyBOX.cpp \
 		  src/BiIniter.cpp src/BiQTP.cpp
 INCLUDE_SRC = -Iinclude -Ilib

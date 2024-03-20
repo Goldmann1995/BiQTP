@@ -16,15 +16,17 @@
 
 #include <curl/curl.h>
 #include <rapidjson/document.h>
-#include <log/log.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
-#include "Calculator.h"
+#include "Macro.h"
 #include "MDRing.h"
-
-#define TOTAL_SYMBOL   600
+#include "Calculator.h"
 
 extern std::unordered_map<std::string, int> symbolUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
+extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
 
 //##################################################//
@@ -65,7 +67,7 @@ void Calculator::Run()
 
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )
-            LOG_ERROR("Calculator::Run() %s ", "nanosleep() failed !");
+            sptrAsyncLogger->error("Calculator::Run() nanosleep() failed !");
 	}
 }
 

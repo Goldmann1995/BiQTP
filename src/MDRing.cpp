@@ -10,9 +10,13 @@
 #include <string>
 #include <algorithm>
 
-#include <log/log.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include "MDRing.h"
+
+extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
 
 //##################################################//
