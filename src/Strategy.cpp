@@ -15,7 +15,9 @@
 
 #include <unordered_map>
 
-#include <log/log.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include "Macro.h"
 #include "MDRing.h"
@@ -24,6 +26,7 @@
 // Extern
 extern std::unordered_map<std::string, int> symbolUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
+extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
 
 //##################################################//
@@ -86,8 +89,8 @@ void AdvancedSLR1::Run()
 
                 mTotalProfit += profit;
                 mTotalCommission += 2*mCapital/1000.0;
-                LOG_DEBUG("AdvancedSLR1::Run() SellSignal # Symbol: %s Profit: %f Total: %f Commission: %f", \
-                           symbol_iter.first.c_str(), profit, mTotalProfit, mTotalCommission);
+                sptrAsyncLogger->debug("AdvancedSLR1::Run() SellSignal # Symbol: {} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
+                                        symbol_iter.first, profit, mTotalProfit, mTotalCommission);
             }
         }
 
@@ -97,8 +100,8 @@ void AdvancedSLR1::Run()
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {
                 mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
-                LOG_DEBUG("AdvancedSLR1::Run() BuySignal # Symbol: %s ADR_30s: %f ADR_1m: %f", \
-                           symbol_iter.first.c_str(), adr30s, adr1m);
+                sptrAsyncLogger->debug("AdvancedSLR1::Run() BuySignal # Symbol: {} ADR_30s: {:.4f} ADR_1m: {:.4f}", \
+                                        symbol_iter.first, adr30s, adr1m);
             }
         } 
     }
@@ -144,8 +147,8 @@ void AdvancedSLR2::Run()
 
                 mTotalProfit += profit;
                 mTotalCommission += 2*mCapital/1000.0;
-                LOG_DEBUG("AdvancedSLR2::Run() SellSignal # Symbol: %s Profit: %f Total: %f Commission: %f", \
-                           symbol_iter.first.c_str(), profit, mTotalProfit, mTotalCommission);
+                sptrAsyncLogger->debug("AdvancedSLR2::Run() SellSignal # Symbol: {} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
+                                        symbol_iter.first, profit, mTotalProfit, mTotalCommission);
             }
         }
 
@@ -155,8 +158,8 @@ void AdvancedSLR2::Run()
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {
                 mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
-                LOG_DEBUG("AdvancedSLR2::Run() BuySignal # Symbol: %s ADR_1m: %f ADR_2m: %f ADR_3m: %f ADR_5m: %f", \
-                           symbol_iter.first.c_str(), adr1m, adr2m, adr3m, adr5m);
+                sptrAsyncLogger->debug("AdvancedSLR2::Run() BuySignal # Symbol: {} ADR_1m: {:.4f} ADR_2m: {:.4f} ADR_3m: {:.4f} ADR_5m: {:.4f}", \
+                                        symbol_iter.first, adr1m, adr2m, adr3m, adr5m);
             }
         }
     }
@@ -207,8 +210,8 @@ void MACross1::Run()
 
                 mTotalProfit += profit;
                 mTotalCommission += (mCapital/1000.0)*2;
-                LOG_DEBUG("MACross1::Run() SellSignal # Symbol: %s Profit: %f Total: %f Commission: %f", \
-                           symbol_iter.first.c_str(), profit, mTotalProfit, mTotalCommission);
+                sptrAsyncLogger->debug("MACross1::Run() SellSignal # Symbol: {} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
+                                        symbol_iter.first, profit, mTotalProfit, mTotalCommission);
             }
         }
 
@@ -219,7 +222,7 @@ void MACross1::Run()
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {
                 mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
-                LOG_DEBUG("MACross1::Run() BuySignal # Symbol: %s", symbol_iter.first.c_str());
+                sptrAsyncLogger->debug("MACross1::Run() BuySignal # Symbol: {}", symbol_iter.first);
             }
         }
     }
@@ -264,8 +267,8 @@ void MACross2::Run()
 
                 mTotalProfit += profit;
                 mTotalCommission += (mCapital/1000.0)*2;
-                LOG_DEBUG("MACross2::Run() SellSignal # Symbol: %s Profit: %f Total: %f Commission: %f", \
-                           symbol_iter.first.c_str(), profit, mTotalProfit, mTotalCommission);
+                sptrAsyncLogger->debug("MACross2::Run() SellSignal # Symbol: {} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
+                                        symbol_iter.first, profit, mTotalProfit, mTotalCommission);
             }
         }
 
@@ -276,7 +279,7 @@ void MACross2::Run()
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {
                 mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
-                LOG_DEBUG("MACross2::Run() BuySignal # Symbol: %s", symbol_iter.first.c_str());
+                sptrAsyncLogger->debug("MACross2::Run() BuySignal # Symbol: {}", symbol_iter.first);
             }
         }
     }

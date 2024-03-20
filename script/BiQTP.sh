@@ -6,8 +6,8 @@ QTP_NAME="BiQTP"
 
 BIN_DIR="${QTP_HOME}bin/"
 BIN_PATH="${QTP_HOME}bin/${QTP_NAME}"
-CFG_FILE="${QTP_HOME}etc/ZETA.conf"
-##LIB_PATH="${ZETA_HOME}lib"
+CFG_FILE="${QTP_HOME}etc/QTP.ini"
+##LIB_PATH="${QTP_HOME}lib"
 
 OUT_FILE="${QTP_HOME}BiQTP.out"
 PID_FILE="${QTP_HOME}BiQTP.pid"
