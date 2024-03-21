@@ -74,6 +74,11 @@ int MDRing::GetCalADRIndex()
     return cal_adr_index;
 }
 
+double MDRing::GetLastPrice()
+{
+    return price[md_index];
+}
+
 void MDRing::SetBuyIndex(int stidx)
 {
     buy_index[stidx] = cal_adr_index;

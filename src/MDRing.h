@@ -26,6 +26,7 @@ public:
     int GetMDIndex();
     int GetCalMAIndex();
     int GetCalADRIndex();
+    double GetLastPrice();
 
     // ~
     void SetBuyIndex(int stidx);

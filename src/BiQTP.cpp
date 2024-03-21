@@ -131,14 +131,16 @@ int main(int argc, char *argv[])
 
     /********** StrategyBOX **********/
     ptrStrategyBOX = new StrategyBOX();
-    AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1, 1000.0);
-    AdvancedSLR2 *aslr2 = new AdvancedSLR2(ASLR2, 1000.0);
-    MACross1 *macs1 = new MACross1(MACROSS1, 1000.0);
-    MACross2 *macs2 = new MACross2(MACROSS2, 1000.0);
-    ptrStrategyBOX->EntrustStrategy(aslr1);
-    ptrStrategyBOX->EntrustStrategy(aslr2);
-    ptrStrategyBOX->EntrustStrategy(macs1);
-    ptrStrategyBOX->EntrustStrategy(macs2);
+    //AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1, 1000.0);
+    //AdvancedSLR2 *aslr2 = new AdvancedSLR2(ASLR2, 1000.0);
+    //MACross1 *macs1 = new MACross1(MACROSS1, 1000.0);
+    //MACross2 *macs2 = new MACross2(MACROSS2, 1000.0);
+    GridTrader *grid = new GridTrader(GRID);
+    //ptrStrategyBOX->EntrustStrategy(aslr1);
+    //ptrStrategyBOX->EntrustStrategy(aslr2);
+    //ptrStrategyBOX->EntrustStrategy(macs1);
+    //ptrStrategyBOX->EntrustStrategy(macs2);
+    ptrStrategyBOX->EntrustStrategy(grid);
     ptrStrategyBOX->Start();
     ptrStrategyBOX->SetSelfTName((char *)"StrategyBOX");
 

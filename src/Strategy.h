@@ -36,6 +36,7 @@ private:
     friend class AdvancedSLR2;
     friend class MACross1;
     friend class MACross2;
+    friend class GridTrader;
 };
 
 //############################################################//
@@ -80,6 +81,25 @@ public:
     ~MACross2();
 
     void Run();
+};
+
+//############################################################//
+
+class GridTrader : public Strategy
+{
+public:
+    GridTrader(int id);
+    ~GridTrader();
+
+    void Run();
+
+private:
+    double total_pos;
+    double total_captical;
+    double total_commission;
+
+    double last_price;
+    std::chrono::time_point<std::chrono::steady_clock> checkTime;
 };
 
 //############################################################//

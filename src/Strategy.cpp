@@ -284,3 +284,68 @@ void MACross2::Run()
         }
     }
 }
+
+//##################################################//
+//   GridTrader
+//##################################################//
+
+GridTrader::GridTrader(int id)
+{
+    mStrategyID = id;
+
+    total_pos = 200000.0;
+    total_captical = 2000.0;
+    total_commission = 0.0;
+
+    last_price = 0.0;
+    checkTime = std::chrono::steady_clock::now();
+
+    sptrAsyncLogger->debug("GridTrader::Run() Buy # pos {:.4f} cap {:.4f} total {:.4f}", \
+                            total_pos, total_captical, total_pos*0.0140+total_captical );
+}
+
+GridTrader::~GridTrader()
+{
+    //
+}
+
+void GridTrader::Run()
+{
+    nowTime = std::chrono::steady_clock::now();
+    std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
+    std::chrono::seconds check_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - checkTime);
+    if( start_time < std::chrono::seconds(30) )
+    {
+        last_price = mdring[492].GetLastPrice();
+        return;
+    }
+    if( check_time < std::chrono::seconds(10) )
+    {
+        return;
+    }
+
+    checkTime = std::chrono::steady_clock::now();
+    double now_price = mdring[492].GetLastPrice();
+    sptrAsyncLogger->debug("GridTrader::Run() now_price: {:.5f} last_price: {:.5f}", now_price, last_price );
+    if( now_price-last_price >= 0.0001 )
+    {
+        total_pos -= 20000.0;
+        total_captical += 20000.0*now_price*0.999;
+        sptrAsyncLogger->debug("GridTrader::Run() Sell # price: {:.5f} pos {:.1f} cap {:.1f} total {:.1f}", \
+                                now_price, total_pos, total_captical, total_pos*now_price+total_captical );
+        last_price = now_price;
+    }
+    else if( now_price-last_price <= -0.0001 )
+    {
+        total_pos += 20000.0;
+        total_captical -= 20000.0*now_price*1.001;
+        sptrAsyncLogger->debug("GridTrader::Run() Buy # price: {:.5f} pos {:.1f} cap {:.1f} total {:.1f}", \
+                                    now_price, total_pos, total_captical, total_pos*now_price+total_captical );
+        last_price = now_price;
+    }
+    else
+    {
+        return;
+    }
+}
+
