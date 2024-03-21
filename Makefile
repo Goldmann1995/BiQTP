@@ -10,10 +10,11 @@ all: buildproj
 #####   QTP_MACRO   #####
 QTP_SRC = lib/inih/ini.c lib/inih/INIReader.cpp \
 		  include/ThreadBase.cpp \
-		  src/MDRing.cpp src/MDReceiver.cpp src/Calculator.cpp src/Strategy.cpp src/StrategyBOX.cpp \
+		  src/MDRing.cpp src/MDReceiver.cpp src/MDSocket.cpp \
+		  src/Calculator.cpp src/Strategy.cpp src/StrategyBOX.cpp \
 		  src/BiIniter.cpp src/BiQTP.cpp
 INCLUDE_SRC = -Iinclude -Ilib
-LIB_SRC = -lcurl -lcrypto
+LIB_SRC = -lcurl -lcrypto -lssl
 
 
 EXTRAITEM = bin/BiQTP
