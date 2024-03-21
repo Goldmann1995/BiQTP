@@ -59,6 +59,21 @@ const std::string& MDRing::GetSymbolName()
     return mSymbol;
 }
 
+int MDRing::GetMDIndex()
+{
+    return md_index;
+}
+
+int MDRing::GetCalMAIndex()
+{
+    return cal_ma_index;
+}
+
+int MDRing::GetCalADRIndex()
+{
+    return cal_adr_index;
+}
+
 void MDRing::SetBuyIndex(int stidx)
 {
     buy_index[stidx] = cal_adr_index;

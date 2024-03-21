@@ -18,6 +18,9 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <websocketpp/client.hpp>
+#include <websocketpp/common/thread.hpp>
+#include <websocketpp/config/asio_client.hpp>
 // QTP
 #include "Macro.h"
 #include "MDRing.h"
@@ -175,6 +178,7 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
 //##################################################//
 void MDSocket::OnClose(websocketpp::connection_hdl hdl)
 {
+    sptrAsyncLogger->error("MDSocket::OnClose() Called");
     TryReconnect();
 }
 

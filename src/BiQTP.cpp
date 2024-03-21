@@ -17,13 +17,16 @@
 #include <vector>
 #include <queue>
 // 3rd-lib
+#include <inih/INIReader.h>
 #include <curl/curl.h>
 //#include <openssl/hmac.h>
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include <inih/INIReader.h>
+#include <websocketpp/client.hpp>
+#include <websocketpp/common/thread.hpp>
+#include <websocketpp/config/asio_client.hpp>
 // internal
 #include <Utils.h>
 // RingMD
@@ -35,6 +38,7 @@
 #include "Calculator.h"
 #include "Strategy.h"
 #include "StrategyBOX.h"
+#include "WatchDog.h"
 // Global
 #include "Macro.h"
 #include "Global.h"
@@ -48,6 +52,7 @@ MDReceiver *ptrMDReceiver = nullptr;
 MDSocket *ptrMDSocket = nullptr;
 Calculator *ptrCalculator = nullptr;
 StrategyBOX *ptrStrategyBOX = nullptr;
+WatchDog *ptrWatchDog = nullptr;
 
 
 /********** Main Entry **********/
@@ -137,11 +142,17 @@ int main(int argc, char *argv[])
     ptrStrategyBOX->Start();
     ptrStrategyBOX->SetSelfTName((char *)"StrategyBOX");
 
+    /********** WatchDog **********/
+    ptrWatchDog = new WatchDog();
+    ptrWatchDog->Start();
+    ptrWatchDog->SetSelfTName((char *)"WatchDog");
+
     /********** Hold for Join **********/
     ptrMDSocket->Join();
     //ptrMDReceiver->Join();
     ptrCalculator->Join();
     ptrStrategyBOX->Join();
+    ptrWatchDog->Join();
 
     /********** 资源清理 **********/
     // 全局清理libcurl环境

@@ -23,6 +23,9 @@ public:
     // Interface
     void SetSymbolName(const std::string& symbol);
     const std::string& GetSymbolName();
+    int GetMDIndex();
+    int GetCalMAIndex();
+    int GetCalADRIndex();
 
     // ~
     void SetBuyIndex(int stidx);

@@ -8,13 +8,7 @@
 
 #pragma once
 
-// internal
 #include <ThreadBase.h>
-// 3rd-lib
-#include <websocketpp/config/asio_client.hpp>
-#include <websocketpp/client.hpp>
-#include <websocketpp/common/thread.hpp>
-#include <websocketpp/config/asio_client.hpp>
 
 // 使用TLS的客户端类型定义
 typedef websocketpp::client<websocketpp::config::asio_tls_client> WSSClient;
