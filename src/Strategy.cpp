@@ -21,14 +21,14 @@
 // ~
 #include "Macro.h"
 #include "MDRing.h"
-#include "BiNotifier.h"
+#include "PushDeer.h"
 #include "Strategy.h"
 
 // Extern
 extern std::unordered_map<std::string, int> symbolUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
 extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
-extern std::unique_ptr<BiNotifier> uptrBiNotifier;
+extern std::unique_ptr<PushDeer> uptrPushDeer;
 
 
 //##################################################//
@@ -330,7 +330,7 @@ void GridTrader::Run()
     double now_price = mdring[492].GetLastPrice();
     sptrAsyncLogger->debug("GridTrader::Run() now_price: {:.5f} last_price: {:.5f}", now_price, last_price );
     //std::string notifystr = "BOMEUSDT now price: " + std::to_string(now_price);
-    //uptrBiNotifier->PushDeer(notifystr);
+    //uptrPushDeer->Notify(notifystr);
     if( now_price-last_price >= 0.0002 )
     {
         total_pos -= 20000.0;

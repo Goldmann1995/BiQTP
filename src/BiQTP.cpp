@@ -34,32 +34,33 @@
 #include "MDRing.h"
 // Module
 #include "BiIniter.h"
-#include "BiNotifier.h"
-#include "AccTruster.h"
-#include "BiTrader.h"
-#include "MDReceiver.h"
 #include "MDSocket.h"
+#include "MDReceiver.h"
 #include "Calculator.h"
 #include "Strategy.h"
 #include "StrategyBOX.h"
+#include "AccTruster.h"
+#include "BiTrader.h"
 #include "WatchDog.h"
+#include "PushDeer.h"
 // Global
 #include "Macro.h"
 #include "Global.h"
 
 
 /********** Module-Ptr **********/
-// 延迟对象创建到main()
 std::shared_ptr<spdlog::logger> sptrAsyncLogger = nullptr;
-INIReader *ptrINIReader = nullptr;
-MDReceiver *ptrMDReceiver = nullptr;
+std::unique_ptr<INIReader> uptrINIReader = nullptr;
+// uptrModules
 std::unique_ptr<MDSocket> uptrMDSocket = nullptr;
+//MDReceiver *ptrMDReceiver = nullptr;
 Calculator *ptrCalculator = nullptr;
 StrategyBOX *ptrStrategyBOX = nullptr;
-WatchDog *ptrWatchDog = nullptr;
-std::unique_ptr<BiNotifier> uptrBiNotifier = nullptr;
-std::unique_ptr<BiTrader> uptrBiTrader = nullptr;
 std::unique_ptr<AccTruster> uptrAccTruster = nullptr;
+std::unique_ptr<BiTrader> uptrBiTrader = nullptr;
+WatchDog *ptrWatchDog = nullptr;
+std::unique_ptr<PushDeer> uptrPushDeer = nullptr;
+// 声明nullptr 延迟对象创建到main()
 
 
 /********** Main Entry **********/
@@ -83,17 +84,18 @@ int main(int argc, char *argv[])
 
 
     /********** 初始化inih **********/
-    ptrINIReader = new INIReader(argv[1]);
-    if( ptrINIReader->ParseError()<0 )
+    uptrINIReader = std::make_unique<INIReader>(argv[1]);
+    if( uptrINIReader->ParseError()<0 )
     {
-        fprintf(stderr, "Error: %s \n", "INI ParseError() !");
+        fprintf(stderr, "Error: %s \n", "INIReader ParseError() failed !");
         return -3;
     }
 
     /********** 初始化spdlog **********/
     // 默认队列大小8192 后台线程1
     spdlog::init_thread_pool(1024*16, 1);
-    std::string log_path = ptrINIReader->Get("log", "LogPath", "UNKNOWN");
+    std::string log_path = uptrINIReader->Get("log", "LogPath", "UNKNOWN");
+    std::string out_path = uptrINIReader->Get("log", "OutPath", "UNKNOWN");
     log_path += Utils::Timer::GetDate("%Y_%m_%d") + "_log";
     sptrAsyncLogger = spdlog::basic_logger_mt<spdlog::async_factory>("sptrAsyncLogger", log_path);
     sptrAsyncLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
@@ -115,47 +117,31 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->info("--------------------------------------");
 
     /********** 打印Config信息 **********/
-    sptrAsyncLogger->info("Config # LogPath: {}", ptrINIReader->Get("log", "LogPath", "UNKNOWN"));
-    std::string bi_api_url = ptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
-    std::string bi_api_key = ptrINIReader->Get("binance", "Apikey", "UNKNOWN");
-    std::string bi_secret_key = ptrINIReader->Get("binance", "SecretKey", "UNKNOWN");
+    sptrAsyncLogger->info("Config # LogPath: {}", log_path);
+    sptrAsyncLogger->info("Config # OutPath: {}", out_path);
+    std::string bi_wss_url = uptrINIReader->Get("binance", "WssUrl", "UNKNOWN");
+    std::string bi_api_url = uptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
+    std::string bi_api_key = uptrINIReader->Get("binance", "Apikey", "UNKNOWN");
+    std::string bi_secret_key = uptrINIReader->Get("binance", "SecretKey", "UNKNOWN");
+    sptrAsyncLogger->info("Config # WssUrl: {}", bi_wss_url);
     sptrAsyncLogger->info("Config # ApiUrl: {}", bi_api_url);
     sptrAsyncLogger->info("Config # Apikey: {}", bi_api_key);
-    std::string push_url = ptrINIReader->Get("notifier", "PushUrl", "UNKNOWN");
-    std::string push_key = ptrINIReader->Get("notifier", "PushKey", "UNKNOWN");
+    std::string push_url = uptrINIReader->Get("notifier", "PushUrl", "UNKNOWN");
+    std::string push_key = uptrINIReader->Get("notifier", "PushKey", "UNKNOWN");
     sptrAsyncLogger->info("Config # PushUrl: {}", push_url);
     sptrAsyncLogger->info("Config # PushKey: {}", push_key);
 
 
-    /********** BiNotifier **********/
-    uptrBiNotifier = std::make_unique<BiNotifier>(push_url, push_key);
-    //uptrBiNotifier->PushDeer("BiQTP Start");
-
-
     /********** BiIniter **********/
-    std::string url = ptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
+    std::string url = uptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
     BiIniter initer(url);
     initer.InitSymbolUMap();
     //initer.InitSymbolFilter();
     initer.UpdateSymbolFilter();
 
 
-    /********** AccTruster **********/
-    uptrAccTruster = std::make_unique<AccTruster>(bi_api_url, bi_api_key, bi_secret_key);
-    uptrAccTruster->Start();
-    uptrAccTruster->SetSelfTName((char *)"AccTruster");
-
-
-    /********** BiTrader **********/
-    uptrBiTrader = std::make_unique<BiTrader>(bi_api_url, bi_api_key, bi_secret_key);
-    //uptrBiTrader->InsertOrder();
-    uptrBiTrader->Start();
-    uptrBiTrader->SetSelfTName((char *)"BiTrader");
-
-
     /********** MDSocket **********/
-    std::string md_uri = ptrINIReader->Get("binance", "WssUrl", "UNKNOWN");
-    uptrMDSocket = std::make_unique<MDSocket>(md_uri);
+    uptrMDSocket = std::make_unique<MDSocket>(bi_wss_url);
     uptrMDSocket->Start();
     uptrMDSocket->SetSelfTName((char *)"MDSocket");
 
@@ -188,10 +174,28 @@ int main(int argc, char *argv[])
     ptrStrategyBOX->SetSelfTName((char *)"StrategyBOX");
 
 
+    /********** AccTruster **********/
+    uptrAccTruster = std::make_unique<AccTruster>(bi_api_url, bi_api_key, bi_secret_key);
+    uptrAccTruster->Start();
+    uptrAccTruster->SetSelfTName((char *)"AccTruster");
+
+
+    /********** BiTrader **********/
+    uptrBiTrader = std::make_unique<BiTrader>(bi_api_url, bi_api_key, bi_secret_key);
+    //uptrBiTrader->InsertOrder();
+    uptrBiTrader->Start();
+    uptrBiTrader->SetSelfTName((char *)"BiTrader");
+
+
     /********** WatchDog **********/
     ptrWatchDog = new WatchDog();
     ptrWatchDog->Start();
     ptrWatchDog->SetSelfTName((char *)"WatchDog");
+
+
+    /********** PushDeer **********/
+    uptrPushDeer = std::make_unique<PushDeer>(push_url, push_key);
+    //uptrBiNotifier->PushDeer("BiQTP Start");
 
 
     /********** Hold for Join **********/
@@ -199,12 +203,12 @@ int main(int argc, char *argv[])
     //ptrMDReceiver->Join();
     ptrCalculator->Join();
     ptrStrategyBOX->Join();
+    uptrAccTruster->Join();
+    uptrBiTrader->Join();
     ptrWatchDog->Join();
 
 
     /********** 资源清理 **********/
-    // delete
-
     // 全局清理libcurl环境
     curl_global_cleanup();
     // 关闭并等待所有日志记录完毕

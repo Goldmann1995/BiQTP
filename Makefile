@@ -12,21 +12,18 @@ QTP_SRC = lib/inih/ini.c lib/inih/INIReader.cpp \
 		  include/ThreadBase.cpp \
 		  src/MDRing.cpp src/MDReceiver.cpp src/MDSocket.cpp \
 		  src/Calculator.cpp src/Strategy.cpp src/StrategyBOX.cpp \
-		  src/BiIniter.cpp src/BiNotifier.cpp src/AccTruster.cpp src/BiTrader.cpp \
-		  src/WatchDog.cpp src/BiQTP.cpp
+		  src/BiIniter.cpp src/AccTruster.cpp src/BiTrader.cpp \
+		  src/WatchDog.cpp src/PushDeer.cpp src/BiQTP.cpp
 INCLUDE_SRC = -Iinclude -Ilib
 LIB_SRC = -lcurl -lcrypto -lssl
 
-
 EXTRAITEM = bin/BiQTP
-#CC = g++ -std=c++11 -Wall -mcmodel=medium
 CC = g++ -std=c++14 -Wall
 AR = ar
 
 
 #####   buildproj   #####
 buildproj:
-#ZMate_Proj: src/ThreadBase.cpp src/Controller.cpp src/UniThread.cpp src/ZLogger.cpp src/MDQReplayer.cpp src/ZETA_QTS.cpp
 	@echo -e "\033[33mbuild proj\033[0m"
 #	@rm -f $@
 #	$(CC) $(ZETA_SRC) $(INCLUDE_SRC) $(LIB_SRC) -o bin/$@

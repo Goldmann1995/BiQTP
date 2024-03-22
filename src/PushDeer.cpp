@@ -1,5 +1,5 @@
 ﻿/*
- * File:        BiNotifier.cpp
+ * File:        PushDeer.cpp
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-22
  * LastEdit:    2024-03-22
@@ -18,65 +18,66 @@
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 // QTP
-#include "BiNotifier.h"
+#include "PushDeer.h"
 
 // Extern
 extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
 
 // Static
-std::string BiNotifier::mCurlBuffer;
+std::string PushDeer::mCurlBuffer;
 
 //##################################################//
 //   Constructor
 //##################################################//
-BiNotifier::BiNotifier(const std::string& url, const std::string& key)
+PushDeer::PushDeer(const std::string& url, const std::string& key)
 {
-    mNotifyUrl = url;
-    mNotifyKey = key;
+    mPushUrl = url;
+    mPushKey = key;
 
     // curl初始化
-    mNotifyCurl = curl_easy_init();
-    if(mNotifyCurl)
+    mPushCurl = curl_easy_init();
+    if(mPushCurl)
     {
-        curl_easy_setopt(mNotifyCurl, CURLOPT_WRITEFUNCTION, NotifyWriteCallback);
-        curl_easy_setopt(mNotifyCurl, CURLOPT_WRITEDATA, &mCurlBuffer);
-        curl_easy_setopt(mNotifyCurl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+        curl_easy_setopt(mPushCurl, CURLOPT_WRITEFUNCTION, PushWriteCallback);
+        curl_easy_setopt(mPushCurl, CURLOPT_WRITEDATA, &mCurlBuffer);
+        curl_easy_setopt(mPushCurl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
     }
     else
-        sptrAsyncLogger->error("BiNotifier::BiNotifier() curl_easy_init() failed !");
+        sptrAsyncLogger->error("PushDeer::PushDeer() curl_easy_init() failed: {}", \
+                                curl_easy_strerror(mCurlCode));
 }
 
 //##################################################//
 //   Destructor
 //##################################################//
-BiNotifier::~BiNotifier()
+PushDeer::~PushDeer()
 {
-    curl_easy_cleanup(mNotifyCurl);
+    curl_easy_cleanup(mPushCurl);
 }
 
 //##################################################//
 //   ~
 //##################################################//
-void BiNotifier::PushDeer(const std::string& content)
+void PushDeer::Notify(const std::string& content)
 {
     // curl配置
-    std::string url = mNotifyUrl;
-    std::string data = "pushkey=" + mNotifyKey + "&text=" + content;
-    curl_easy_setopt(mNotifyCurl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(mNotifyCurl, CURLOPT_POSTFIELDS, data.c_str());
+    std::string url = mPushUrl;
+    std::string data = "pushkey=" + mPushKey + "&text=" + content;
+    curl_easy_setopt(mPushCurl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(mPushCurl, CURLOPT_POSTFIELDS, data.c_str());
 
     // 执行GET请求
-    mCurlCode = curl_easy_perform(mNotifyCurl);
+    mCurlCode = curl_easy_perform(mPushCurl);
     if(mCurlCode != CURLE_OK)
     {
-        sptrAsyncLogger->error("BiNotifier::PushDeer() curl_easy_perform() failed: {}", \
+        sptrAsyncLogger->error("PushDeer::Notify() curl_easy_perform() failed: {}", \
                                 curl_easy_strerror(mCurlCode));
     }
     else
     {
-        sptrAsyncLogger->info("BiNotifier::PushDeer() curl_easy_perform() success: {}", \
-                                mCurlBuffer);
+        sptrAsyncLogger->info("PushDeer::Notify() curl_easy_perform() success: {}", \
+                               mCurlBuffer);
     }
 
     mCurlBuffer.clear();
@@ -85,7 +86,7 @@ void BiNotifier::PushDeer(const std::string& content)
 //##################################################//
 //   curl回调函数
 //##################################################//
-size_t BiNotifier::NotifyWriteCallback(void *contents, size_t size, size_t nmemb, std::string *userp)
+size_t PushDeer::PushWriteCallback(void *contents, size_t size, size_t nmemb, std::string *userp)
 {
     size_t length = size*nmemb;
     userp->append((char*)contents, length);
