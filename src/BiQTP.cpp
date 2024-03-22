@@ -8,9 +8,10 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-//#include <string>
+#include <string>
 #include <string.h>
 #include <chrono>
+#include <memory>
 // STL
 #include <unordered_map>
 #include <unordered_set>
@@ -33,6 +34,7 @@
 #include "MDRing.h"
 // Module
 #include "BiIniter.h"
+#include "BiNotifier.h"
 #include "MDReceiver.h"
 #include "MDSocket.h"
 #include "Calculator.h"
@@ -53,6 +55,7 @@ MDSocket *ptrMDSocket = nullptr;
 Calculator *ptrCalculator = nullptr;
 StrategyBOX *ptrStrategyBOX = nullptr;
 WatchDog *ptrWatchDog = nullptr;
+std::unique_ptr<BiNotifier> uptrBiNotifier = nullptr;
 
 
 /********** Main Entry **********/
@@ -74,6 +77,7 @@ int main(int argc, char *argv[])
     // 全局初始化libcurl环境
     curl_global_init(CURL_GLOBAL_ALL);
 
+
     /********** 初始化inih **********/
     ptrINIReader = new INIReader(argv[1]);
     if( ptrINIReader->ParseError()<0 )
@@ -91,10 +95,11 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
     // 默认是info级别
     sptrAsyncLogger->set_level(spdlog::level::trace);
-    // 默认是off 即关闭自动刷新
+    // 默认是off关闭自动刷新
     sptrAsyncLogger->flush_on(spdlog::level::trace);
 
-    /********** QTP版本信息 **********/
+
+    /********** 打印QTP版本信息 **********/
     sptrAsyncLogger->info("--------------------------------------");
     sptrAsyncLogger->info("       ____ ____ ____ ____ ____    ");
     sptrAsyncLogger->info("      ||B |||i |||Q |||T |||P ||   ");
@@ -107,6 +112,14 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->info("LogPath: {}", ptrINIReader->Get("log", "LogPath", "UNKNOWN"));
     sptrAsyncLogger->info("ApiUrl: {}", ptrINIReader->Get("binance", "ApiUrl", "UNKNOWN"));
 
+
+    /********** BiNotifier **********/
+    std::string notify_url = ptrINIReader->Get("notifier", "PushUrl", "UNKNOWN");
+    std::string notify_key = ptrINIReader->Get("notifier", "PushKey", "UNKNOWN");
+    uptrBiNotifier = std::make_unique<BiNotifier>(notify_url, notify_key);
+    uptrBiNotifier->PushDeer("BiQTP Start");
+
+
     /********** BiIniter **********/
     std::string url = ptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
     BiIniter initer(url);
@@ -114,20 +127,24 @@ int main(int argc, char *argv[])
     //initer.InitSymbolFilter();
     initer.UpdateSymbolFilter();
 
+
     /********** MDSocket **********/
     ptrMDSocket = new MDSocket("wss://stream.binance.com:443/stream?streams=!miniTicker@arr");
     ptrMDSocket->Start();
     ptrMDSocket->SetSelfTName((char *)"MDSocket");
+
 
     /********** MDReceiver **********/
     //ptrMDReceiver = new MDReceiver(url);
     //ptrMDReceiver->Start();
     //ptrMDReceiver->SetSelfTName((char *)"MDReceiver");
 
+
     /********** Calculator **********/
     ptrCalculator = new Calculator();
     ptrCalculator->Start();
     ptrCalculator->SetSelfTName((char *)"Calculator");
+
 
     /********** StrategyBOX **********/
     ptrStrategyBOX = new StrategyBOX();
@@ -144,10 +161,12 @@ int main(int argc, char *argv[])
     ptrStrategyBOX->Start();
     ptrStrategyBOX->SetSelfTName((char *)"StrategyBOX");
 
+
     /********** WatchDog **********/
     ptrWatchDog = new WatchDog();
     ptrWatchDog->Start();
     ptrWatchDog->SetSelfTName((char *)"WatchDog");
+
 
     /********** Hold for Join **********/
     ptrMDSocket->Join();
@@ -156,7 +175,10 @@ int main(int argc, char *argv[])
     ptrStrategyBOX->Join();
     ptrWatchDog->Join();
 
+
     /********** 资源清理 **********/
+    // delete
+
     // 全局清理libcurl环境
     curl_global_cleanup();
     // 关闭并等待所有日志记录完毕

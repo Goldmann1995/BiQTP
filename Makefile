@@ -12,14 +12,14 @@ QTP_SRC = lib/inih/ini.c lib/inih/INIReader.cpp \
 		  include/ThreadBase.cpp \
 		  src/MDRing.cpp src/MDReceiver.cpp src/MDSocket.cpp \
 		  src/Calculator.cpp src/Strategy.cpp src/StrategyBOX.cpp \
-		  src/BiIniter.cpp src/WatchDog.cpp src/BiQTP.cpp
+		  src/BiIniter.cpp src/BiNotifier.cpp src/WatchDog.cpp src/BiQTP.cpp
 INCLUDE_SRC = -Iinclude -Ilib
 LIB_SRC = -lcurl -lcrypto -lssl
 
 
 EXTRAITEM = bin/BiQTP
 #CC = g++ -std=c++11 -Wall -mcmodel=medium
-CC = g++ -std=c++11 -Wall
+CC = g++ -std=c++14 -Wall
 AR = ar
 
 
