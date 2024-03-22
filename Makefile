@@ -12,7 +12,7 @@ QTP_SRC = lib/inih/ini.c lib/inih/INIReader.cpp \
 		  include/ThreadBase.cpp \
 		  src/MDRing.cpp src/MDReceiver.cpp src/MDSocket.cpp \
 		  src/Calculator.cpp src/Strategy.cpp src/StrategyBOX.cpp \
-		  src/BiIniter.cpp src/BiNotifier.cpp src/WatchDog.cpp src/BiQTP.cpp
+		  src/BiIniter.cpp src/BiNotifier.cpp src/BiTrader.cpp src/WatchDog.cpp src/BiQTP.cpp
 INCLUDE_SRC = -Iinclude -Ilib
 LIB_SRC = -lcurl -lcrypto -lssl
 

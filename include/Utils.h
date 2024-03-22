@@ -20,8 +20,9 @@
 #include <time.h>
 #include <sys/time.h>
 /// for NS <SSL> ///
-#include "openssl/sha.h"
-#include "openssl/aes.h"
+#include <openssl/sha.h>
+#include <openssl/aes.h>
+#include <openssl/hmac.h>
 
 
 ////////////////////////////////////////////////////////
@@ -324,7 +325,6 @@ namespace Utils
         }
 	}
 
-#if 0
     ////////////////////////////////////////////////////////
     ///                                                  ///
     ///                    加解密工具类                   ///
@@ -333,6 +333,25 @@ namespace Utils
     ////////////////////////////////////////////////////////
     namespace SSL
 	{
+        /************************************************************************/
+        // 函数名:     GetHMAC_SHA256
+        // 函数功能:   生成基于秘钥的SHA256摘要哈希 (哈希指纹)
+        // 函数参数:   待处理字符串
+        // 函数返回值:  64位摘要哈希
+        /************************************************************************/ 
+        static inline std::string GetHMAC_SHA256(const std::string &secretKey, const std::string &data)
+        {
+            unsigned char* digest;
+            digest = HMAC(EVP_sha256(), secretKey.c_str(), secretKey.length(), \
+                          reinterpret_cast<const unsigned char*>(data.c_str()), data.length(), NULL, NULL);
+            char mdString[65];
+            for(int i = 0; i < 32; i++)
+                sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);
+            std::string strHMACSHA256 = std::string(mdString);
+            return strHMACSHA256;
+        }
+        
+#if 0
         /************************************************************************/
         // 函数名:     GetSHA256
         // 函数功能:   生成SHA256摘要哈希 (哈希指纹)
@@ -495,8 +514,8 @@ namespace Utils
             int retlen = strRet.length() - AES_BLOCK_SIZE - (int)strRet[strRet.length()-1];
             return strRet.substr(AES_BLOCK_SIZE, retlen);
         }
-    }
 #endif
+    }
 
     /************************************************************************/
     // 函数名:    IsFileExists

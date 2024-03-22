@@ -35,6 +35,7 @@
 // Module
 #include "BiIniter.h"
 #include "BiNotifier.h"
+#include "BiTrader.h"
 #include "MDReceiver.h"
 #include "MDSocket.h"
 #include "Calculator.h"
@@ -56,6 +57,7 @@ Calculator *ptrCalculator = nullptr;
 StrategyBOX *ptrStrategyBOX = nullptr;
 WatchDog *ptrWatchDog = nullptr;
 std::unique_ptr<BiNotifier> uptrBiNotifier = nullptr;
+std::unique_ptr<BiTrader> uptrBiTrader = nullptr;
 
 
 /********** Main Entry **********/
@@ -117,7 +119,7 @@ int main(int argc, char *argv[])
     std::string notify_url = ptrINIReader->Get("notifier", "PushUrl", "UNKNOWN");
     std::string notify_key = ptrINIReader->Get("notifier", "PushKey", "UNKNOWN");
     uptrBiNotifier = std::make_unique<BiNotifier>(notify_url, notify_key);
-    uptrBiNotifier->PushDeer("BiQTP Start");
+    //uptrBiNotifier->PushDeer("BiQTP Start");
 
 
     /********** BiIniter **********/
@@ -128,8 +130,19 @@ int main(int argc, char *argv[])
     initer.UpdateSymbolFilter();
 
 
+    /********** BiTrader **********/
+    std::string td_url = ptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
+    std::string td_api_key = ptrINIReader->Get("binance", "Apikey", "UNKNOWN");
+    std::string td_secret_key = ptrINIReader->Get("binance", "SecretKey", "UNKNOWN");
+    uptrBiTrader = std::make_unique<BiTrader>(td_url, td_api_key, td_secret_key);
+    //uptrBiTrader->InsertOrder();
+    uptrBiTrader->Start();
+    uptrBiTrader->SetSelfTName((char *)"BiTrader");
+
+
     /********** MDSocket **********/
-    ptrMDSocket = new MDSocket("wss://stream.binance.com:443/stream?streams=!miniTicker@arr");
+    std::string md_uri = ptrINIReader->Get("binance", "WssUrl", "UNKNOWN");
+    ptrMDSocket = new MDSocket(md_uri);
     ptrMDSocket->Start();
     ptrMDSocket->SetSelfTName((char *)"MDSocket");
 
