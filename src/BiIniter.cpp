@@ -67,46 +67,59 @@ BiIniter::~BiIniter()
 //##################################################//
 void BiIniter::InitSymbolUMap()
 {
+    struct timespec time_to_sleep;
+    time_to_sleep.tv_sec  = 3;   // 3s to reconnect
+    time_to_sleep.tv_nsec = 0;
+
     // curl配置
     std::string url = mInitUrl + "/api/v3/ticker/price";
     curl_easy_setopt(mInitCurl, CURLOPT_URL, url.c_str());
 
-    // 执行GET请求
-    mCurlCode = curl_easy_perform(mInitCurl);
-    if(mCurlCode != CURLE_OK)
+    bool init_flag = false;
+    while( !init_flag )
     {
-        fprintf(stderr, "BiIniter::curl_easy_perform() failed: %s\n", curl_easy_strerror(mCurlCode));
-        return;
-    }
-    else
-    {
-        int index = 0;
-        rapidjson::Document jsondoc;
-        rapidjson::ParseResult jsonret = jsondoc.Parse(mCurlBuffer.c_str());
-        if(jsonret)
+        // 执行GET请求
+        mCurlCode = curl_easy_perform(mInitCurl);
+        if(mCurlCode != CURLE_OK)
         {
-            for(const auto& item:jsondoc.GetArray())
-            {
-                std::string symbol = item["symbol"].GetString();
-                std::string ending = "USDT";
-                if(symbol.find("USDT") != std::string::npos &&\
-                   symbol.compare(symbol.length()-ending.length(), ending.length(), ending) == 0)
-                {
-                    symbolUMap.insert(make_pair(symbol, index));
-                    mdring[index].SetSymbolName(symbol);
-                    sptrAsyncLogger->info("BiIniter::UpdateSymbolFilter() Symbol: {} Index: {}", symbol, index);
-                    index++;
-                }
-            }
+            sptrAsyncLogger->error("BiIniter::InitSymbolUMap() curl_easy_perform() failed: {}", \
+                                    curl_easy_strerror(mCurlCode));
         }
         else
         {
-            std::cout << "BiIniter::rapidjson Parse() Error !" << std::endl;
-            return;
+            init_flag = true;
+            int index = 0;
+            rapidjson::Document jsondoc;
+            rapidjson::ParseResult jsonret = jsondoc.Parse(mCurlBuffer.c_str());
+            if(jsonret)
+            {
+                for(const auto& item:jsondoc.GetArray())
+                {
+                    std::string symbol = item["symbol"].GetString();
+                    std::string ending = "USDT";
+                    if(symbol.find("USDT") != std::string::npos &&\
+                    symbol.compare(symbol.length()-ending.length(), ending.length(), ending) == 0)
+                    {
+                        symbolUMap.insert(make_pair(symbol, index));
+                        mdring[index].SetSymbolName(symbol);
+                        sptrAsyncLogger->info("BiIniter::UpdateSymbolFilter() Symbol: {} Index: {}", symbol, index);
+                        index++;
+                    }
+                }
+            }
+            else
+            {
+                sptrAsyncLogger->error("BiIniter::InitSymbolUMap() rapidjson Parse() Error !");
+            }
+
+            mCurlBuffer.clear();
         }
 
-        mCurlBuffer.clear();
-    }     
+        // 重连延迟
+        int result = nanosleep(&time_to_sleep, NULL);
+        if( result != 0 )
+            sptrAsyncLogger->error("BiIniter::InitSymbolUMap() nanosleep() failed !");
+    }  
 }
 
 void BiIniter::InitSymbolFilter()

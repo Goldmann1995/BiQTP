@@ -65,7 +65,7 @@ WatchDog::~WatchDog()
 void WatchDog::Run()
 {
     struct timespec time_to_sleep;
-    time_to_sleep.tv_sec  = 3;   // 3s
+    time_to_sleep.tv_sec  = 1;   // 1s
     time_to_sleep.tv_nsec = 0;
 
 	while( true )

@@ -35,6 +35,7 @@
 // Module
 #include "BiIniter.h"
 #include "BiNotifier.h"
+#include "AccTruster.h"
 #include "BiTrader.h"
 #include "MDReceiver.h"
 #include "MDSocket.h"
@@ -52,12 +53,13 @@
 std::shared_ptr<spdlog::logger> sptrAsyncLogger = nullptr;
 INIReader *ptrINIReader = nullptr;
 MDReceiver *ptrMDReceiver = nullptr;
-MDSocket *ptrMDSocket = nullptr;
+std::unique_ptr<MDSocket> uptrMDSocket = nullptr;
 Calculator *ptrCalculator = nullptr;
 StrategyBOX *ptrStrategyBOX = nullptr;
 WatchDog *ptrWatchDog = nullptr;
 std::unique_ptr<BiNotifier> uptrBiNotifier = nullptr;
 std::unique_ptr<BiTrader> uptrBiTrader = nullptr;
+std::unique_ptr<AccTruster> uptrAccTruster = nullptr;
 
 
 /********** Main Entry **********/
@@ -111,14 +113,22 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->info("           Version: \033[0;34m{}\033[0m    ", BI_QTP_VERSION);
     sptrAsyncLogger->info("           Date: \033[0;34m{}\033[0m    ",    BI_QTP_VERDATE);
     sptrAsyncLogger->info("--------------------------------------");
-    sptrAsyncLogger->info("LogPath: {}", ptrINIReader->Get("log", "LogPath", "UNKNOWN"));
-    sptrAsyncLogger->info("ApiUrl: {}", ptrINIReader->Get("binance", "ApiUrl", "UNKNOWN"));
+
+    /********** 打印Config信息 **********/
+    sptrAsyncLogger->info("Config # LogPath: {}", ptrINIReader->Get("log", "LogPath", "UNKNOWN"));
+    std::string bi_api_url = ptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
+    std::string bi_api_key = ptrINIReader->Get("binance", "Apikey", "UNKNOWN");
+    std::string bi_secret_key = ptrINIReader->Get("binance", "SecretKey", "UNKNOWN");
+    sptrAsyncLogger->info("Config # ApiUrl: {}", bi_api_url);
+    sptrAsyncLogger->info("Config # Apikey: {}", bi_api_key);
+    std::string push_url = ptrINIReader->Get("notifier", "PushUrl", "UNKNOWN");
+    std::string push_key = ptrINIReader->Get("notifier", "PushKey", "UNKNOWN");
+    sptrAsyncLogger->info("Config # PushUrl: {}", push_url);
+    sptrAsyncLogger->info("Config # PushKey: {}", push_key);
 
 
     /********** BiNotifier **********/
-    std::string notify_url = ptrINIReader->Get("notifier", "PushUrl", "UNKNOWN");
-    std::string notify_key = ptrINIReader->Get("notifier", "PushKey", "UNKNOWN");
-    uptrBiNotifier = std::make_unique<BiNotifier>(notify_url, notify_key);
+    uptrBiNotifier = std::make_unique<BiNotifier>(push_url, push_key);
     //uptrBiNotifier->PushDeer("BiQTP Start");
 
 
@@ -130,11 +140,14 @@ int main(int argc, char *argv[])
     initer.UpdateSymbolFilter();
 
 
+    /********** AccTruster **********/
+    uptrAccTruster = std::make_unique<AccTruster>(bi_api_url, bi_api_key, bi_secret_key);
+    uptrAccTruster->Start();
+    uptrAccTruster->SetSelfTName((char *)"AccTruster");
+
+
     /********** BiTrader **********/
-    std::string td_url = ptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
-    std::string td_api_key = ptrINIReader->Get("binance", "Apikey", "UNKNOWN");
-    std::string td_secret_key = ptrINIReader->Get("binance", "SecretKey", "UNKNOWN");
-    uptrBiTrader = std::make_unique<BiTrader>(td_url, td_api_key, td_secret_key);
+    uptrBiTrader = std::make_unique<BiTrader>(bi_api_url, bi_api_key, bi_secret_key);
     //uptrBiTrader->InsertOrder();
     uptrBiTrader->Start();
     uptrBiTrader->SetSelfTName((char *)"BiTrader");
@@ -142,9 +155,9 @@ int main(int argc, char *argv[])
 
     /********** MDSocket **********/
     std::string md_uri = ptrINIReader->Get("binance", "WssUrl", "UNKNOWN");
-    ptrMDSocket = new MDSocket(md_uri);
-    ptrMDSocket->Start();
-    ptrMDSocket->SetSelfTName((char *)"MDSocket");
+    uptrMDSocket = std::make_unique<MDSocket>(md_uri);
+    uptrMDSocket->Start();
+    uptrMDSocket->SetSelfTName((char *)"MDSocket");
 
 
     /********** MDReceiver **********/
@@ -182,7 +195,7 @@ int main(int argc, char *argv[])
 
 
     /********** Hold for Join **********/
-    ptrMDSocket->Join();
+    uptrMDSocket->Join();
     //ptrMDReceiver->Join();
     ptrCalculator->Join();
     ptrStrategyBOX->Join();

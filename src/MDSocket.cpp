@@ -35,7 +35,7 @@ extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 int MDSocket::mMsgCnt = 0;
 std::string MDSocket::mMdUrl;
 WSSClient MDSocket::mWSSClient;
-
+websocketpp::connection_hdl MDSocket::mConnHdl;
 
 //##################################################//
 //   Constructor
@@ -56,12 +56,16 @@ MDSocket::MDSocket(const std::string& url)
         mWSSClient.set_tls_init_handler(bind(&OnTlsInit));
         // 注册WS消息处理回调
         mWSSClient.set_message_handler(&OnMessage);
+        // 注册WS连接回调
+        mWSSClient.set_open_handler(&OnOpen);
+        // 注册WS失败回调
+        mWSSClient.set_fail_handler(&OnFail);
         // 注册WS关闭回调
         mWSSClient.set_close_handler(&OnClose);
     }
     catch( websocketpp::exception const& e )
     {
-        sptrAsyncLogger->error("MDSocket::Init() Error: {}", e.what());
+        sptrAsyncLogger->error("MDSocket::Init() WSError: {}", e.what());
     }
     catch( const std::exception& e )
     {
@@ -82,28 +86,43 @@ MDSocket::~MDSocket()
 //##################################################//
 void MDSocket::Run()
 {
-    try
+    struct timespec time_to_sleep;
+    time_to_sleep.tv_sec  = 1;   // 1s
+    time_to_sleep.tv_nsec = 0;
+
+    while(1)
     {
-        // 获取WebSocket连接
-        websocketpp::lib::error_code ec;
-        WSSClient::connection_ptr con_ptr = mWSSClient.get_connection(mMdUrl, ec);
-        if( ec )
+        try
         {
-            sptrAsyncLogger->error("MDSocket::Run() Error: {}", ec.message());
-            return;
+            // 获取WebSocket连接
+            websocketpp::lib::error_code ec;
+            WSSClient::connection_ptr con_ptr = mWSSClient.get_connection(mMdUrl, ec);
+            if( ec )
+            {
+                sptrAsyncLogger->error("MDSocket::Run() Error: {}", ec.message());
+                return;
+            }
+            // 连接到服务器
+            mWSSClient.connect(con_ptr);
+            // 开始ASIO io_service事件循环
+            mWSSClient.run();
         }
-        // 连接到服务器
-        mWSSClient.connect(con_ptr);
-        // 开始ASIO io_service事件循环
-        mWSSClient.run();
-    }
-    catch( websocketpp::exception const& e )
-    {
-        sptrAsyncLogger->error("MDSocket::Run() Error: {}", e.what());
-    }
-    catch( const std::exception& e )
-    {
-        sptrAsyncLogger->error("MDSocket::Run() Error: {}", e.what());
+        catch( websocketpp::exception const& e )
+        {
+            sptrAsyncLogger->error("MDSocket::Run() WSError: {}", e.what());
+        }
+        catch( const std::exception& e )
+        {
+            sptrAsyncLogger->error("MDSocket::Run() Error: {}", e.what());
+        }
+
+        // Sleep 1s
+        int result = nanosleep(&time_to_sleep, NULL);
+        if( result != 0 )
+            sptrAsyncLogger->error("WatchDog::Run() nanosleep() failed !");
+        
+        // 重新初始化
+        ReInit();
     }
 }
 
@@ -174,51 +193,74 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
 }
 
 //##################################################//
+//   WebSocket连接回调函数
+//##################################################//
+void MDSocket::OnOpen(websocketpp::connection_hdl hdl)
+{
+    sptrAsyncLogger->info("MDSocket::OnOpen() Called");
+    mConnHdl = hdl;
+}
+
+//##################################################//
+//   WebSocket失败回调函数
+//##################################################//
+void  MDSocket::OnFail(websocketpp::connection_hdl hdl)
+{
+    sptrAsyncLogger->info("MDSocket::OnFail() Called");
+    // Bad Connection
+    //websocketpp::lib::error_code ec;
+    //mWSSClient.close(mConnHdl, websocketpp::close::status::normal, "", ec);
+    //if( ec )
+    //    sptrAsyncLogger->error("MDSocket::OnFail() Error: {}", ec.message());
+    //mWSSClient.reset();
+}
+
+//##################################################//
 //   WebSocket关闭回调函数
 //##################################################//
 void MDSocket::OnClose(websocketpp::connection_hdl hdl)
 {
-    sptrAsyncLogger->error("MDSocket::OnClose() Called");
-    TryReconnect();
+    sptrAsyncLogger->info("MDSocket::OnClose() Called");
+    // invalid state
+    //websocketpp::lib::error_code ec;
+    //mWSSClient.close(mConnHdl, websocketpp::close::status::normal, "", ec);
+    //if( ec )
+    //    sptrAsyncLogger->error("MDSocket::OnClose() Error: {}", ec.message());
+    //mWSSClient.reset();
 }
 
 //##################################################//
-//   断线重连
+//   WebSocket重新初始化
 //##################################################//
-void MDSocket::TryReconnect()
+void MDSocket::ReInit()
 {
-    int conflag = false;
-    struct timespec time_to_sleep;
-    time_to_sleep.tv_sec  = 3;   // 3s to reconnect
-    time_to_sleep.tv_nsec = 0;   // 100us
-    
-    while( !conflag )
+    try
     {
-        try
-        {
-            websocketpp::lib::error_code ec;
-            WSSClient::connection_ptr con_ptr = mWSSClient.get_connection(mMdUrl, ec);
-            if( ec )
-            {
-                sptrAsyncLogger->error("MDSocket::TryReconnect() Error: {}", ec.message());
-                return;
-            }
-            // 连接到服务器
-            mWSSClient.connect(con_ptr);
-        }
-        catch( websocketpp::exception const& e )
-        {
-            sptrAsyncLogger->error("MDSocket::TryReconnect() Error: {}", e.what());
-        }
-        catch( const std::exception& e )
-        {
-            sptrAsyncLogger->error("MDSocket::TryReconnect() Error: {}", e.what());
-        }
-
-        // 重连延迟
-        int result = nanosleep(&time_to_sleep, NULL);
-        if( result != 0 )
-            sptrAsyncLogger->error("MDReceiver::TryReconnect() nanosleep() failed !");
+        // 必须首先重置
+        mWSSClient.reset();
+        // 设置日志输出等级
+        mWSSClient.set_access_channels(websocketpp::log::alevel::all);
+        mWSSClient.clear_access_channels(websocketpp::log::alevel::frame_payload);
+        // 初始化ASIO
+        mWSSClient.init_asio();
+        // 回调函数需要声明static
+        // 注册TLS初始化回调
+        mWSSClient.set_tls_init_handler(bind(&OnTlsInit));
+        // 注册WS消息处理回调
+        mWSSClient.set_message_handler(&OnMessage);
+        // 注册WS连接回调
+        mWSSClient.set_open_handler(&OnOpen);
+        // 注册WS失败回调
+        mWSSClient.set_fail_handler(&OnFail);
+        // 注册WS关闭回调
+        mWSSClient.set_close_handler(&OnClose);
     }
-    // 注意: 考虑添加最大重连尝试次数
+    catch( websocketpp::exception const& e )
+    {
+        sptrAsyncLogger->error("MDSocket::ReInit() WSError: {}", e.what());
+    }
+    catch( const std::exception& e )
+    {
+        sptrAsyncLogger->error("MDSocket::ReInit() Error: {}", e.what());
+    }
 }

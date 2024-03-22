@@ -303,7 +303,7 @@ GridTrader::GridTrader(int id)
     checkTime = std::chrono::steady_clock::now();
 
     sptrAsyncLogger->debug("GridTrader::Run() Buy # pos {:.4f} cap {:.4f} total {:.4f}", \
-                            total_pos, total_captical, total_pos*0.0140+total_captical );
+                            total_pos, total_captical, total_pos*0.0144+total_captical );
 }
 
 GridTrader::~GridTrader()
@@ -329,9 +329,9 @@ void GridTrader::Run()
     checkTime = std::chrono::steady_clock::now();
     double now_price = mdring[492].GetLastPrice();
     sptrAsyncLogger->debug("GridTrader::Run() now_price: {:.5f} last_price: {:.5f}", now_price, last_price );
-    std::string notifystr = "BOMEUSDT now price: " + std::to_string(now_price);
-    uptrBiNotifier->PushDeer(notifystr);
-    if( now_price-last_price >= 0.0001 )
+    //std::string notifystr = "BOMEUSDT now price: " + std::to_string(now_price);
+    //uptrBiNotifier->PushDeer(notifystr);
+    if( now_price-last_price >= 0.0002 )
     {
         total_pos -= 20000.0;
         total_captical += 20000.0*now_price*0.999;
@@ -339,7 +339,7 @@ void GridTrader::Run()
                                 now_price, total_pos, total_captical, total_pos*now_price+total_captical );
         last_price = now_price;
     }
-    else if( now_price-last_price <= -0.0001 )
+    else if( now_price-last_price <= -0.0002 )
     {
         total_pos += 20000.0;
         total_captical -= 20000.0*now_price*1.001;
