@@ -24,7 +24,7 @@
 #include "MDRing.h"
 #include "Calculator.h"
 
-extern std::unordered_map<std::string, int> symbolUMap;
+extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
 extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
@@ -67,7 +67,9 @@ void Calculator::Run()
 
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )
+        {
             sptrAsyncLogger->error("Calculator::Run() nanosleep() failed !");
+        }
 	}
 }
 
@@ -76,7 +78,7 @@ void Calculator::Run()
 //##################################################//
 void Calculator::CalculateLastPrice()
 {
-    for(const auto& symbol_iter:symbolUMap)
+    for(const auto& symbol_iter:symbol2idxUMap)
     {
         mdring[symbol_iter.second].CalMovingAverage();
         mdring[symbol_iter.second].CalADRatio();

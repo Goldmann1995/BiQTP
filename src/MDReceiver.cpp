@@ -25,7 +25,7 @@
 #include "MDReceiver.h"
 
 // Extern
-extern std::unordered_map<std::string, int> symbolUMap;
+extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
 extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
@@ -121,9 +121,9 @@ int MDReceiver::RequestAllPrice()
                 std::string str_symbol = item["symbol"].GetString();
                 std::string str_price = item["price"].GetString();
                 double db_price = stod(str_price);
-                if(symbolUMap.find(str_symbol) != symbolUMap.end())
+                if(symbol2idxUMap.find(str_symbol) != symbol2idxUMap.end())
                 {
-                    int symbol_idx = symbolUMap[str_symbol];
+                    int symbol_idx = symbol2idxUMap[str_symbol];
                     mdring[symbol_idx].PushMD(db_price);
                 }
             }

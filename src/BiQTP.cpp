@@ -1,6 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////
 ///                                                                     ///
 ///                          Binance QTP                                ///
+///                           by summer                                 ///
 ///                                                                     ///
 ///////////////////////////////////////////////////////////////////////////
 
@@ -33,7 +34,7 @@
 // RingMD
 #include "MDRing.h"
 // Module
-#include "BiIniter.h"
+#include "BiHelper.h"
 #include "MDSocket.h"
 #include "MDReceiver.h"
 #include "Calculator.h"
@@ -49,18 +50,18 @@
 
 
 /********** Module-Ptr **********/
+// 声明nullptr 延迟对象创建到main()
 std::shared_ptr<spdlog::logger> sptrAsyncLogger = nullptr;
 std::unique_ptr<INIReader> uptrINIReader = nullptr;
 // uptrModules
 std::unique_ptr<MDSocket> uptrMDSocket = nullptr;
 //MDReceiver *ptrMDReceiver = nullptr;
-Calculator *ptrCalculator = nullptr;
-StrategyBOX *ptrStrategyBOX = nullptr;
+std::unique_ptr<Calculator> uptrCalculator = nullptr;
+std::unique_ptr<StrategyBOX> uptrStrategyBOX = nullptr;
 std::unique_ptr<AccTruster> uptrAccTruster = nullptr;
 std::unique_ptr<BiTrader> uptrBiTrader = nullptr;
-WatchDog *ptrWatchDog = nullptr;
+std::unique_ptr<WatchDog> uptrWatchDog = nullptr;
 std::unique_ptr<PushDeer> uptrPushDeer = nullptr;
-// 声明nullptr 延迟对象创建到main()
 
 
 /********** Main Entry **********/
@@ -117,6 +118,8 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->info("--------------------------------------");
 
     /********** 打印Config信息 **********/
+    std::string exchange_path = uptrINIReader->Get("log", "ExchangePath", "UNKNOWN");
+    sptrAsyncLogger->info("Config # ExchangePath: {}", exchange_path);
     sptrAsyncLogger->info("Config # LogPath: {}", log_path);
     sptrAsyncLogger->info("Config # OutPath: {}", out_path);
     std::string bi_wss_url = uptrINIReader->Get("binance", "WssUrl", "UNKNOWN");
@@ -132,12 +135,10 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->info("Config # PushKey: {}", push_key);
 
 
-    /********** BiIniter **********/
-    std::string url = uptrINIReader->Get("binance", "ApiUrl", "UNKNOWN");
-    BiIniter initer(url);
-    initer.InitSymbolUMap();
-    //initer.InitSymbolFilter();
-    initer.UpdateSymbolFilter();
+    /********** BiHelper **********/
+    BiHelper helper(bi_api_url, exchange_path);
+    helper.InitSymbolIdxMap();
+    helper.InitSymbolFilter();
 
 
     /********** MDSocket **********/
@@ -153,25 +154,25 @@ int main(int argc, char *argv[])
 
 
     /********** Calculator **********/
-    ptrCalculator = new Calculator();
-    ptrCalculator->Start();
-    ptrCalculator->SetSelfTName((char *)"Calculator");
+    uptrCalculator = std::make_unique<Calculator>();
+    uptrCalculator->Start();
+    uptrCalculator->SetSelfTName((char *)"Calculator");
 
 
     /********** StrategyBOX **********/
-    ptrStrategyBOX = new StrategyBOX();
-    //AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1, 1000.0);
-    //AdvancedSLR2 *aslr2 = new AdvancedSLR2(ASLR2, 1000.0);
-    //MACross1 *macs1 = new MACross1(MACROSS1, 1000.0);
-    //MACross2 *macs2 = new MACross2(MACROSS2, 1000.0);
+    uptrStrategyBOX = std::make_unique<StrategyBOX>();
+    AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1, 1000.0);
+    AdvancedSLR2 *aslr2 = new AdvancedSLR2(ASLR2, 1000.0);
+    MACross1 *macs1 = new MACross1(MACROSS1, 1000.0);
+    MACross2 *macs2 = new MACross2(MACROSS2, 1000.0);
     GridTrader *grid = new GridTrader(GRID);
-    //ptrStrategyBOX->EntrustStrategy(aslr1);
-    //ptrStrategyBOX->EntrustStrategy(aslr2);
-    //ptrStrategyBOX->EntrustStrategy(macs1);
-    //ptrStrategyBOX->EntrustStrategy(macs2);
-    ptrStrategyBOX->EntrustStrategy(grid);
-    ptrStrategyBOX->Start();
-    ptrStrategyBOX->SetSelfTName((char *)"StrategyBOX");
+    uptrStrategyBOX->EntrustStrategy(aslr1);
+    uptrStrategyBOX->EntrustStrategy(aslr2);
+    uptrStrategyBOX->EntrustStrategy(macs1);
+    uptrStrategyBOX->EntrustStrategy(macs2);
+    uptrStrategyBOX->EntrustStrategy(grid);
+    uptrStrategyBOX->Start();
+    uptrStrategyBOX->SetSelfTName((char *)"StrategyBOX");
 
 
     /********** AccTruster **********/
@@ -188,9 +189,9 @@ int main(int argc, char *argv[])
 
 
     /********** WatchDog **********/
-    ptrWatchDog = new WatchDog();
-    ptrWatchDog->Start();
-    ptrWatchDog->SetSelfTName((char *)"WatchDog");
+    uptrWatchDog = std::make_unique<WatchDog>();
+    uptrWatchDog->Start();
+    uptrWatchDog->SetSelfTName((char *)"WatchDog");
 
 
     /********** PushDeer **********/
@@ -201,11 +202,11 @@ int main(int argc, char *argv[])
     /********** Hold for Join **********/
     uptrMDSocket->Join();
     //ptrMDReceiver->Join();
-    ptrCalculator->Join();
-    ptrStrategyBOX->Join();
+    uptrCalculator->Join();
+    uptrStrategyBOX->Join();
     uptrAccTruster->Join();
     uptrBiTrader->Join();
-    ptrWatchDog->Join();
+    uptrWatchDog->Join();
 
 
     /********** 资源清理 **********/

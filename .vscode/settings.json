@@ -61,6 +61,7 @@
         "span": "cpp",
         "stack": "cpp",
         "list": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "type_traits": "cpp"
     }
 }

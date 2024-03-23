@@ -28,6 +28,7 @@
 // Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern Binance::SymbolFilter symbolFilterArr[TOTAL_SYMBOL];
+extern double lastPriceArr[TOTAL_SYMBOL];
 extern MDRing mdring[TOTAL_SYMBOL];
 extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
@@ -98,6 +99,7 @@ void BiHelper::InitSymbolIdxMap()
                 for(const auto& item:jsondoc.GetArray())
                 {
                     std::string symbol = item["symbol"].GetString();
+                    double price = std::stod(item["price"].GetString());
                     std::string ending = "USDT";
                     if( symbol.find("USDT") != std::string::npos && \
                         symbol.compare(symbol.length()-ending.length(), ending.length(), ending) == 0)
@@ -105,6 +107,7 @@ void BiHelper::InitSymbolIdxMap()
                         symbol2idxUMap.insert(make_pair(symbol, index));
                         symbolFilterArr[index].SetSymbolName(symbol);
                         mdring[index].SetSymbolName(symbol);
+                        lastPriceArr[index] = price;   // 初始化价格
                         sptrAsyncLogger->info("BiHelper::UpdateSymbolFilter() Symbol: {} -> Index: {}", symbol, index);
                         index++;
                     }
