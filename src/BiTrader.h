@@ -9,6 +9,7 @@
 #pragma once
 
 #include <ThreadBase.h>
+#include <BiDef.h>
 
 
 //############################################################//
@@ -24,8 +25,14 @@ public:
     void Run();
 
     // Interface
-    void InsertOrder();
-
+    void InsertOrder(std::string symbol, \
+                     Binance::OrderSide side, \
+                     double price, \
+                     double qty, \
+                     Binance::OrderType type, \
+                     Binance::TimeInForce tif);
+    // ~
+    static std::string double2string(double value, int precision);
     // curl回调函数
     static size_t TDWriteCallback(void *contents, size_t size, size_t nmemb, std::string *userp);
 
@@ -33,7 +40,7 @@ private:
     std::string mTdUrl;
     std::string mTdApiKey;
     std::string mTdSecretKey;
-    
+    // TdCurl
     CURL *mTdCurl = nullptr;
     CURLcode mCurlCode;
     static std::string mCurlBuffer;

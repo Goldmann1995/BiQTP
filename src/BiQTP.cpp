@@ -186,6 +186,8 @@ int main(int argc, char *argv[])
     //uptrBiTrader->InsertOrder();
     uptrBiTrader->Start();
     uptrBiTrader->SetSelfTName((char *)"BiTrader");
+    //uptrBiTrader->InsertOrder("BOMEUSDT", Binance::OrderSide::SELL, 0.02, 10000, \
+    //                          Binance::OrderType::LIMIT, Binance::TimeInForce::GTC);
 
 
     /********** WatchDog **********/

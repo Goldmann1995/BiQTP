@@ -8,9 +8,11 @@
 
 #include <unistd.h>
 #include <iostream>
-#include <fstream>
+#include <sstream>
 #include <string>
 #include <chrono>
+// STL
+#include <unordered_map>
 // 3rd-lib
 #include <curl/curl.h>
 #include <rapidjson/document.h>
@@ -19,12 +21,15 @@
 #include <spdlog/sinks/basic_file_sink.h>
 // QTP
 #include <Utils.h>
+#include <BiDef.h>
+#include <BiFilter.h>
+#include "Macro.h"
 #include "BiTrader.h"
 
-
 // Extern
+extern std::unordered_map<std::string, int> symbol2idxUMap;
+extern Binance::SymbolFilter symbolFilterArr[TOTAL_SYMBOL];
 extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
-
 
 // Static
 std::string BiTrader::mCurlBuffer;
@@ -50,7 +55,10 @@ BiTrader::BiTrader(const std::string& url, const std::string& api_key, const std
         curl_easy_setopt(mTdCurl, CURLOPT_WRITEDATA, &mCurlBuffer);
     }
     else
-        sptrAsyncLogger->error("BiTrader::BiTrader() curl_easy_init() failed !");
+    {
+        sptrAsyncLogger->error("BiTrader::BiTrader() curl_easy_init() failed: {}", \
+                                curl_easy_strerror(mCurlCode));
+    }
 }
 
 //##################################################//
@@ -79,15 +87,53 @@ void BiTrader::Run()
 }
 
 //##################################################//
-//   ~
+//   报单
 //##################################################//
-void BiTrader::InsertOrder()
+void BiTrader::InsertOrder(std::string symbol, \
+                           Binance::OrderSide side, \
+                           double price, \
+                           double qty, \
+                           Binance::OrderType type, \
+                           Binance::TimeInForce tif)
 {
     // 设置Order参数
+    int index = symbol2idxUMap[symbol];
+    std::string order_side = GetOrderSide(side);
+    std::string order_type = GetOrderType(type);
+    std::string order_tif = GetTimeInForce(tif);
+    std::string order_price = double2string(price, symbolFilterArr[index].GetTickSize());
+    std::string order_qty = double2string(qty, symbolFilterArr[index].GetStepSize());
+    if( price < symbolFilterArr[index].GetMinPrice() || 
+        price > symbolFilterArr[index].GetMaxPrice() )
+    {
+        sptrAsyncLogger->error("BiTrader::InsertOrder() Price Error: {}", price);
+        return;
+    }
+    if( qty < symbolFilterArr[index].GetMinQty() || 
+        qty > symbolFilterArr[index].GetMaxQty() )
+    {
+        sptrAsyncLogger->error("BiTrader::InsertOrder() Qty Error: {}", qty);
+        return;
+    }
+    if( price*qty < symbolFilterArr[index].GetMinNotional() || 
+        price*qty > symbolFilterArr[index].GetMaxNotional() )
+    {
+        sptrAsyncLogger->error("BiTrader::InsertOrder() Notional Error: {}", price*qty);
+        return;
+    }
+    std::string post_param = "symbol=" + symbol + "&";
+    post_param += "side=" + order_side + "&";
+    post_param += "type=" + order_type + "&";
+    if(type==Binance::OrderType::LIMIT)
+        post_param += "timeInForce=" + order_tif + "&";
+    post_param += "price=" + order_price + "&";
+    post_param += "quantity=" + order_qty + "&";
+
+    // 设置Curl参数
     auto now = std::chrono::system_clock::now();
     auto duration = now.time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    std::string req = "symbol=BOMEUSDT&side=SELL&type=LIMIT&timeInForce=GTC&quantity=1000.0&price=0.02&timestamp="+std::to_string(millis);
+    std::string req = post_param+"timestamp="+std::to_string(millis);
     std::string signature = Utils::SSL::GetHMAC_SHA256(mTdSecretKey, req);
     std::string data = req + "&signature=" + signature;
     // curl配置
@@ -107,6 +153,16 @@ void BiTrader::InsertOrder()
     }
 
     mCurlBuffer.clear();
+}
+
+//##################################################//
+//   ~
+//##################################################//
+std::string BiTrader::double2string(double value, int precision)
+{
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(precision) << value;
+    return oss.str();
 }
 
 //##################################################//
