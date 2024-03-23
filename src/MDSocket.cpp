@@ -27,8 +27,10 @@
 #include "MDSocket.h"
 
 // Extern
+extern std::unordered_map<std::string, int> symbol2idxUMap;
+extern double lastPriceArr[TOTAL_SYMBOL];
 extern MDRing mdring[TOTAL_SYMBOL];
-extern std::unordered_map<std::string, int> symbolUMap;
+
 extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 
 // Static
@@ -179,11 +181,17 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
             std::string str_symbol = item["s"].GetString();
             std::string str_price = item["c"].GetString();
             double db_price = stod(str_price);
-            if(symbolUMap.find(str_symbol) != symbolUMap.end())
+            if(symbol2idxUMap.find(str_symbol) != symbol2idxUMap.end())
             {
-                int symbol_idx = symbolUMap[str_symbol];
-                mdring[symbol_idx].PushMD(db_price);
+                int symbol_idx = symbol2idxUMap[str_symbol];
+                //mdring[symbol_idx].PushMD(db_price);
+                lastPriceArr[symbol_idx] = db_price;
             }
+        }
+
+        for(const auto& symbol_iter:symbol2idxUMap)
+        {
+            mdring[symbol_iter.second].PushMD(lastPriceArr[symbol_iter.second]);
         }
     }
     else

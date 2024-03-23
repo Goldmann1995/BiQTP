@@ -47,30 +47,19 @@ public:
     void CalMovingAverage();
     void CalADRatio();
     // 获取因子
-    double GetADRatio30s(unsigned int lead);
-    double GetADRatio1m(unsigned int lead);
-    double GetADRatio2m(unsigned int lead);
-    double GetADRatio3m(unsigned int lead);
-    double GetADRatio5m(unsigned int lead);
-    double GetADRatio10m(unsigned int lead);
-    double GetADRatio20m(unsigned int lead);
-    double GetADRatio30m(unsigned int lead);
-    double GetADRatio60m(unsigned int lead);
+    double GetADRatio30s(int lead);
+    double GetADRatio1m(int lead);
+    double GetADRatio2m(int lead);
+    double GetADRatio3m(int lead);
+    double GetADRatio5m(int lead);
+    double GetADRatio10m(int lead);
+    double GetADRatio20m(int lead);
+    double GetADRatio30m(int lead);
+    double GetADRatio60m(int lead);
     // 获取因子
-    double GetMA5m(unsigned int lead);
-    double GetMA25m(unsigned int lead);
-    double GetMA100m(unsigned int lead);
-
-    // 初始化Binance交易参数
-    void SetMinPrice(const std::string& price);
-    void SetMaxPrice(const std::string& price);
-    void SetTickSize(const std::string& size);
-    void SetMinQty(const std::string& qty);
-    void SetMaxQty(const std::string& qty);
-    void SetStepSize(const std::string& size);
-    void SetMinNotional(const std::string& notional);
-    void SetMaxNotional(const std::string& notional);
-    void PrintExchangeInfo();
+    double GetMA5m(int lead);
+    double GetMA25m(int lead);
+    double GetMA100m(int lead);
 
 private:
     std::string mSymbol;
@@ -101,20 +90,6 @@ private:
     double adr20m[RING_SIZE];
     double adr30m[RING_SIZE];
     double adr60m[RING_SIZE];
-
-private:
-    double minPrice;
-    double maxPrice;
-    double tickSize;
-    unsigned int pricePrecision;
-
-    double minQty;
-    double maxQty;
-    double stepSize;
-    unsigned int qtyPrecision;
-
-    double minNotional;
-    double maxNotional;
 };
 
 //############################################################//

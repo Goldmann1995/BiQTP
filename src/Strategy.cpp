@@ -25,7 +25,7 @@
 #include "Strategy.h"
 
 // Extern
-extern std::unordered_map<std::string, int> symbolUMap;
+extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
 extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
 extern std::unique_ptr<PushDeer> uptrPushDeer;
@@ -75,7 +75,7 @@ void AdvancedSLR1::Run()
     if( start_time < std::chrono::seconds(70) )
         return;
 
-    for(const auto& symbol_iter:symbolUMap)
+    for(const auto& symbol_iter:symbol2idxUMap)
     {
         double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
@@ -130,7 +130,7 @@ void AdvancedSLR2::Run()
     if( start_time < std::chrono::seconds(320) )
         return;
     
-    for(const auto& symbol_iter:symbolUMap)
+    for(const auto& symbol_iter:symbol2idxUMap)
     {
         double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
@@ -189,7 +189,7 @@ void MACross1::Run()
     if( start_time < std::chrono::seconds(1800) )
         return;
     
-    for(const auto& symbol_iter:symbolUMap)
+    for(const auto& symbol_iter:symbol2idxUMap)
     {
         double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
@@ -252,7 +252,7 @@ void MACross2::Run()
     if( start_time < std::chrono::seconds(6060) )
         return;
     
-    for(const auto& symbol_iter:symbolUMap)
+    for(const auto& symbol_iter:symbol2idxUMap)
     {
         double ma25m = mdring[symbol_iter.second].GetMA25m(0);
         double ma100m = mdring[symbol_iter.second].GetMA100m(0);
