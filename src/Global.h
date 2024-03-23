@@ -14,23 +14,26 @@
 #include "RingBuffer.hpp"
 #include "UniStruct.h"
 #include "MDRing.h"
+#include "../include/BiFilter.h"
 
 
 #define TOTAL_SYMBOL   600
 
 
 //////////////////////////////////////////////
-///           RingBuffer Defs              ///
+///                Global                  ///
 //////////////////////////////////////////////
 
-// think summer@20221023 - 全局变量空间溢出问题
+// QTP初始化标识
+//bool bQTPIniting = true;
 
 ////////////////////////////////////
 ///              MD              ///
 ////////////////////////////////////
 
-std::unordered_map<std::string, int> symbolUMap;
-// MarketData
+std::unordered_map<std::string, int> symbol2idxUMap;
+Binance::SymbolFilter symbolFilterArr[TOTAL_SYMBOL];
+double lastPriceArr[TOTAL_SYMBOL];
 MDRing mdring[TOTAL_SYMBOL];
 
 
@@ -39,14 +42,8 @@ MDRing mdring[TOTAL_SYMBOL];
 ////////////////////////////////////
 
 // ZLogger
-RingBuffer<UniStruct::LogMessage> rb_log_msg;      // 主运行日志
-//RingBuffer<UniStruct::LogMessage> rb_log_wdog;   // WatchDog日志
+//RingBuffer<UniStruct::LogMessage> rb_log_msg;      // 主运行日志
+//RingBuffer<UniStruct::LogMessage> rb_log_wdog;     // WatchDog日志
 
 
-////////////////////////////////////
-///           Global             ///
-////////////////////////////////////
-
-// QTP初始化标识
-//bool bQTPIniting = true;
-
+//////////////////////////////////////////////
