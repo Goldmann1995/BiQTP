@@ -17,7 +17,8 @@
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/fmt/ostr.h>
 #include <websocketpp/client.hpp>
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
@@ -30,8 +31,9 @@
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern double lastPriceArr[TOTAL_SYMBOL];
 extern MDRing mdring[TOTAL_SYMBOL];
-
-extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
+// AsyncLogger
+extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
+extern std::shared_ptr<spdlog::async_logger> sptrAsyncOuter;
 
 // Static
 int MDSocket::mMsgCnt = 0;
@@ -192,6 +194,7 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
         for(const auto& symbol_iter:symbol2idxUMap)
         {
             mdring[symbol_iter.second].PushMD(lastPriceArr[symbol_iter.second]);
+            sptrAsyncOuter->info("{},{}", symbol_iter.first, lastPriceArr[symbol_iter.second]);
         }
     }
     else

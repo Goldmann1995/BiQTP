@@ -10,7 +10,6 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <string.h>
 #include <chrono>
 #include <memory>
 // STL
@@ -21,11 +20,11 @@
 // 3rd-lib
 #include <inih/INIReader.h>
 #include <curl/curl.h>
-//#include <openssl/hmac.h>
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/fmt/ostr.h>
 #include <websocketpp/client.hpp>
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
@@ -51,11 +50,14 @@
 
 /********** Module-Ptr **********/
 // 声明nullptr 延迟对象创建到main()
-std::shared_ptr<spdlog::logger> sptrAsyncLogger = nullptr;
 std::unique_ptr<INIReader> uptrINIReader = nullptr;
+std::shared_ptr<spdlog::sinks::daily_file_sink_mt> sptrDailyLogSink = nullptr;
+std::shared_ptr<spdlog::async_logger> sptrAsyncLogger = nullptr;
+std::shared_ptr<spdlog::sinks::daily_file_sink_mt> sptrDailyOutSink = nullptr;
+std::shared_ptr<spdlog::async_logger> sptrAsyncOuter = nullptr;
 // uptrModules
 std::unique_ptr<MDSocket> uptrMDSocket = nullptr;
-//MDReceiver *ptrMDReceiver = nullptr;
+//std::unique_ptr<MDReceiver> uptrMDReceiver = nullptr;
 std::unique_ptr<Calculator> uptrCalculator = nullptr;
 std::unique_ptr<StrategyBOX> uptrStrategyBOX = nullptr;
 std::unique_ptr<AccTruster> uptrAccTruster = nullptr;
@@ -93,6 +95,7 @@ int main(int argc, char *argv[])
     }
 
     /********** 初始化spdlog **********/
+#if 0
     // 默认队列大小8192 后台线程1
     spdlog::init_thread_pool(1024*16, 1);
     std::string log_path = uptrINIReader->Get("log", "LogPath", "UNKNOWN");
@@ -104,7 +107,36 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->set_level(spdlog::level::trace);
     // 默认是off关闭自动刷新
     sptrAsyncLogger->flush_on(spdlog::level::trace);
+#endif
 
+#if 1
+    // 默认队列大小8192 后台线程1
+    //@spdlog// 后台线程数量超过1会引起乱序问题
+    spdlog::init_thread_pool(1024*128, 1);
+    std::string log_path = uptrINIReader->Get("log", "LogPath", "UNKNOWN");
+    std::string out_path = uptrINIReader->Get("log", "OutPath", "UNKNOWN");
+    // 创建每日滚动的文件sink
+    sptrDailyLogSink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(log_path, 0, 0);
+    sptrDailyLogSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
+    sptrDailyOutSink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(out_path, 0, 0);
+    sptrDailyOutSink->set_pattern("%v");
+    // 创建异步Logger
+    //@spdlog// block - 当消息队列满时 日志操作会阻塞直到队列中有足够的空间
+    //@spdlog// overrun_oldest - 当消息队列满时 最旧的消息会被新的消息覆盖以避免阻塞
+    sptrAsyncLogger = std::make_shared<spdlog::async_logger>(
+                      "sptrAsyncLogger", sptrDailyLogSink, spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(sptrAsyncLogger);
+    // 创建异步Outer
+    sptrAsyncOuter = std::make_shared<spdlog::async_logger>(
+                      "sptrAsyncOuter", sptrDailyOutSink, spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(sptrAsyncOuter);
+    // 默认是info级别
+    sptrAsyncLogger->set_level(spdlog::level::trace);
+    sptrAsyncOuter->set_level(spdlog::level::trace);
+    // 默认是off关闭自动刷新
+    sptrAsyncLogger->flush_on(spdlog::level::trace);
+    sptrAsyncOuter->flush_on(spdlog::level::trace);
+#endif
 
     /********** 打印QTP版本信息 **********/
     sptrAsyncLogger->info("--------------------------------------");
@@ -148,9 +180,9 @@ int main(int argc, char *argv[])
 
 
     /********** MDReceiver **********/
-    //ptrMDReceiver = new MDReceiver(url);
-    //ptrMDReceiver->Start();
-    //ptrMDReceiver->SetSelfTName((char *)"MDReceiver");
+    //uptrMDReceiver = std::make_unique<MDReceiver>(bi_api_url);
+    //uptrMDReceiver->Start();
+    //uptrMDReceiver->SetSelfTName((char *)"MDReceiver");
 
 
     /********** Calculator **********/
@@ -186,8 +218,8 @@ int main(int argc, char *argv[])
     //uptrBiTrader->InsertOrder();
     uptrBiTrader->Start();
     uptrBiTrader->SetSelfTName((char *)"BiTrader");
-    //uptrBiTrader->InsertOrder("BOMEUSDT", Binance::OrderSide::SELL, 0.02, 10000, \
-    //                          Binance::OrderType::LIMIT, Binance::TimeInForce::GTC);
+    /*uptrBiTrader->InsertOrder("BOMEUSDT", Binance::OrderSide::SELL, 0.02, 10000, \
+                              Binance::OrderType::LIMIT, Binance::TimeInForce::GTC);*/
 
 
     /********** WatchDog **********/
@@ -203,7 +235,7 @@ int main(int argc, char *argv[])
 
     /********** Hold for Join **********/
     uptrMDSocket->Join();
-    //ptrMDReceiver->Join();
+    //uptrMDReceiver->Join();
     uptrCalculator->Join();
     uptrStrategyBOX->Join();
     uptrAccTruster->Join();

@@ -12,11 +12,12 @@
 
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/fmt/ostr.h>
 
 #include "MDRing.h"
 
-extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
+extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 
 
 //##################################################//

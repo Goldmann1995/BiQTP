@@ -18,7 +18,8 @@
 #include <curl/curl.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/fmt/ostr.h>
 #include <websocketpp/client.hpp>
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
@@ -37,7 +38,7 @@
 // Extern
 extern MDRing mdring[TOTAL_SYMBOL];
 extern std::unordered_map<std::string, int> symbol2idxUMap;
-extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
+extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 
 
 //##################################################//

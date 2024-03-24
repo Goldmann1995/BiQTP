@@ -18,7 +18,8 @@
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/fmt/ostr.h>
 // Module
 #include "Macro.h"
 #include "MDRing.h"
@@ -27,7 +28,7 @@
 // Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
-extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
+extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 
 // Static
 std::string MDReceiver::mCurlBuffer;
