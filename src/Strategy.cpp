@@ -39,6 +39,10 @@ Strategy::Strategy()
 {
     mStrategyID = -1;
 
+    mPositiveCnt = 0;
+    mNegativeCnt = 0;
+    mOrderCnt = 0;
+
     mCapital = 0.0;
     mTotalProfit = 0.0;
     mTotalCommission = 0.0;
@@ -53,6 +57,11 @@ Strategy::Strategy()
 Strategy::~Strategy()
 {
     // ~
+}
+
+double Strategy::GetPositiveRate()
+{
+    return (double)mPositiveCnt/(double)mOrderCnt;
 }
 
 //##################################################//
@@ -73,35 +82,42 @@ void AdvancedSLR1::Run()
 {
     nowTime = std::chrono::steady_clock::now();
     std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    if( start_time < std::chrono::seconds(70) )
+    if( start_time < std::chrono::seconds(370) )
         return;
 
     for(const auto& symbol_iter:symbol2idxUMap)
     {
         double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
+        double adr5m_p = mdring[symbol_iter.second].GetADRatio5m(20);
 
         if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
         {
-            //if(mdring[symbol_iter.second].EstimateBuyMax(mStrategyID))
             if(adr30s<0.0)
             {
                 double profit = mdring[symbol_iter.second].GetProfit(mStrategyID, mCapital);
                 mdring[symbol_iter.second].ClearBuyIndex(mStrategyID);
                 mdring[symbol_iter.second].SetSellIndex(mStrategyID);
 
+                if(profit>0.0)
+                    mPositiveCnt++;
+                else
+                    mNegativeCnt++;
+
                 mTotalProfit += profit;
                 mTotalCommission += 2*mCapital/1000.0;
-                sptrAsyncLogger->debug("AdvancedSLR1::Run() SellSignal # Symbol: {} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
-                                        symbol_iter.first, profit, mTotalProfit, mTotalCommission);
+                sptrAsyncLogger->debug("AdvancedSLR1::Run() SellSignal # Symbol: {} WinRate: {} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
+                                        symbol_iter.first, GetPositiveRate(), profit, mTotalProfit, mTotalCommission);
             }
         }
 
-        if( adr30s>0.01 && adr1m >0.018 && \
+        if( -0.01<adr5m_p && adr5m_p<0.01 && \
+            adr30s>0.01 && adr1m >0.018 && \
             mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 10 )
         {
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {
+                mOrderCnt++;
                 mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
                 sptrAsyncLogger->debug("AdvancedSLR1::Run() BuySignal # Symbol: {} ADR_30s: {:.4f} ADR_1m: {:.4f}", \
                                         symbol_iter.first, adr30s, adr1m);
@@ -128,7 +144,7 @@ void AdvancedSLR2::Run()
 {
     nowTime = std::chrono::steady_clock::now();
     std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    if( start_time < std::chrono::seconds(320) )
+    if( start_time < std::chrono::seconds(620) )
         return;
     
     for(const auto& symbol_iter:symbol2idxUMap)
@@ -138,6 +154,7 @@ void AdvancedSLR2::Run()
         double adr2m = mdring[symbol_iter.second].GetADRatio2m(0);
         double adr3m = mdring[symbol_iter.second].GetADRatio3m(0);
         double adr5m = mdring[symbol_iter.second].GetADRatio5m(0);
+        double adr5m_p = mdring[symbol_iter.second].GetADRatio5m(100);
 
         if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
         {
@@ -148,18 +165,25 @@ void AdvancedSLR2::Run()
                 mdring[symbol_iter.second].ClearBuyIndex(mStrategyID);
                 mdring[symbol_iter.second].SetSellIndex(mStrategyID);
 
+                if(profit>0.0)
+                    mPositiveCnt++;
+                else
+                    mNegativeCnt++;
+
                 mTotalProfit += profit;
                 mTotalCommission += 2*mCapital/1000.0;
-                sptrAsyncLogger->debug("AdvancedSLR2::Run() SellSignal # Symbol: {} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
-                                        symbol_iter.first, profit, mTotalProfit, mTotalCommission);
+                sptrAsyncLogger->debug("AdvancedSLR2::Run() SellSignal # Symbol: {} WinRate: {} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
+                                        symbol_iter.first, GetPositiveRate(), profit, mTotalProfit, mTotalCommission);
             }
         }
 
-        if( adr1m>0.003 && adr2m >0.006 && adr3m >0.012 && adr5m >0.02 && \
+        if( -0.01<adr5m_p && adr5m_p<0.01 && \
+            adr1m>0.003 && adr2m >0.006 && adr3m >0.012 && adr5m >0.02 && \
             mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 10 )
         {
             if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
             {
+                mOrderCnt++;
                 mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
                 sptrAsyncLogger->debug("AdvancedSLR2::Run() BuySignal # Symbol: {} ADR_1m: {:.4f} ADR_2m: {:.4f} ADR_3m: {:.4f} ADR_5m: {:.4f}", \
                                         symbol_iter.first, adr1m, adr2m, adr3m, adr5m);

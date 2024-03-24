@@ -76,11 +76,11 @@ void WatchDog::Run()
         {
             //runTime = std::chrono::steady_clock::now();
 
-            int md_index      = mdring[0].GetMDIndex();
-            int cal_ma_index  = mdring[0].GetCalMAIndex();
-            int cal_adr_index = mdring[0].GetCalADRIndex();
-            sptrAsyncLogger->info("WatchDog::Run() MDIndex={} CalMAIndex={} CalADRIndex={}", \
-                                   md_index, cal_ma_index, cal_adr_index);
+            //int md_index      = mdring[0].GetMDIndex();
+            //int cal_ma_index  = mdring[0].GetCalMAIndex();
+            //int cal_adr_index = mdring[0].GetCalADRIndex();
+            /*sptrAsyncLogger->info("WatchDog::Run() MDIndex={} CalMAIndex={} CalADRIndex={}", \
+                                   md_index, cal_ma_index, cal_adr_index);*/
         }
 
         int result = nanosleep(&time_to_sleep, NULL);

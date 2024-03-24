@@ -21,8 +21,14 @@ public:
     // 策略逻辑
     virtual void Run() = 0;
 
+    double GetPositiveRate();
+
 private:
     int mStrategyID;
+
+    int mPositiveCnt;
+    int mNegativeCnt;
+    int mOrderCnt;
 
     double mCapital;
     double mTotalProfit;
