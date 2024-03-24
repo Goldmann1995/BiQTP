@@ -20,6 +20,7 @@ public:
 
     // Interface
     void InitSymbolIdxMap();
+    void InitSymbolOuter();
     void RequestSymbolFilter();
     void InitSymbolFilter();
 

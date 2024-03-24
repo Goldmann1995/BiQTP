@@ -7,12 +7,12 @@
 
 // BiQTP版本号
 #define BI_QTP_VERSION   "Alpha"
-#define BI_QTP_VERDATE   "20240319"
+#define BI_QTP_VERDATE   "20240324"
 
 
 /********** 配置 **********/
 
-// Binance币种容量
+// Binance币种容量上限
 #define TOTAL_SYMBOL   600
 
 // 策略容量

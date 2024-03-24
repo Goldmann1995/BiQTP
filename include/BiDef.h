@@ -86,6 +86,16 @@ namespace Binance
     const std::string GetOrderType(OrderType type);
 
     const std::string GetTimeInForce(TimeInForce tif);
+
+    // miniTicker
+    struct miniTicker
+    {
+        int64_t timestamp;
+        std::string symbol;
+        std::string price;
+        std::string volume;
+        std::string amount;
+    };
 }
 
 #endif /* _BI_DEF_H_ */

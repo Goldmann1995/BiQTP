@@ -170,6 +170,7 @@ int main(int argc, char *argv[])
     /********** BiHelper **********/
     BiHelper helper(bi_api_url, exchange_path);
     helper.InitSymbolIdxMap();
+    helper.InitSymbolOuter();
     helper.InitSymbolFilter();
 
 

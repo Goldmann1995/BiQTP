@@ -23,13 +23,15 @@
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
 // QTP
+#include "Utils.h"
 #include "Macro.h"
+#include "BiFilter.h"
 #include "MDRing.h"
 #include "MDSocket.h"
 
 // Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
-extern double lastPriceArr[TOTAL_SYMBOL];
+extern Binance::miniTicker miniTickerArr[TOTAL_SYMBOL];
 extern MDRing mdring[TOTAL_SYMBOL];
 // AsyncLogger
 extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
@@ -69,11 +71,11 @@ MDSocket::MDSocket(const std::string& url)
     }
     catch( websocketpp::exception const& e )
     {
-        sptrAsyncLogger->error("MDSocket::Init() WSError: {}", e.what());
+        sptrAsyncLogger->error("MDSocket::MDSocket() WSError: {}", e.what());
     }
     catch( const std::exception& e )
     {
-        sptrAsyncLogger->error("MDSocket::Init() Error: {}", e.what());
+        sptrAsyncLogger->error("MDSocket::MDSocket() Error: {}", e.what());
     }
 }
 
@@ -158,19 +160,18 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
 {
     //sptrAsyncLogger->info("MDSocket::OnMessage() {}", msg->get_payload());
 
-    if( (mMsgCnt++)%3 )
-        return;
-
     rapidjson::Document jsondoc;
     rapidjson::ParseResult jsonret = jsondoc.Parse(msg->get_payload().c_str());
     if(jsonret)
     {
+        // 确认jsondoc是一个对象
         if( !jsondoc.IsObject() )
         {
             sptrAsyncLogger->error("MDSocket::OnMessage() jsondoc is not Object !");
             return;
         }
 
+        // 确认data是一个非空数组
         const rapidjson::Value& symbols = jsondoc["data"];
         if( !symbols.IsArray() || symbols.Empty() )
         {
@@ -178,23 +179,57 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
             return;
         }
 
+        // 每1s接收实时行情
+        int64_t timestamp;
+        std::string symbol;
+        std::string price;
+        std::string volume;
+        std::string amount;
         for(const auto& item : symbols.GetArray())
         {
-            std::string str_symbol = item["s"].GetString();
-            std::string str_price = item["c"].GetString();
-            double db_price = stod(str_price);
-            if(symbol2idxUMap.find(str_symbol) != symbol2idxUMap.end())
+            if( item.HasMember("E") )
+                timestamp = item["E"].GetInt64();
+            if( item.HasMember("s") )
+                symbol = item["s"].GetString();
+            if( item.HasMember("c") )
+                price = item["c"].GetString();
+            if( item.HasMember("v") )
+                volume = item["v"].GetString();
+            if( item.HasMember("q") )
+                amount = item["q"].GetString();
+            
+            if(symbol2idxUMap.find(symbol) != symbol2idxUMap.end())
             {
-                int symbol_idx = symbol2idxUMap[str_symbol];
-                //mdring[symbol_idx].PushMD(db_price);
-                lastPriceArr[symbol_idx] = db_price;
+                int symbol_idx = symbol2idxUMap[symbol];
+                miniTickerArr[symbol_idx].timestamp = timestamp;
+                miniTickerArr[symbol_idx].symbol = symbol;
+                miniTickerArr[symbol_idx].price = price;
+                miniTickerArr[symbol_idx].volume = volume;
+                miniTickerArr[symbol_idx].amount = amount;
             }
         }
 
+        // 每1s落地Outer
         for(const auto& symbol_iter:symbol2idxUMap)
         {
-            mdring[symbol_iter.second].PushMD(lastPriceArr[symbol_iter.second]);
-            sptrAsyncOuter->info("{},{}", symbol_iter.first, lastPriceArr[symbol_iter.second]);
+            // think@summer
+            miniTickerArr[symbol_iter.second].timestamp = Utils::Timer::GetMillisecondTimestamp();
+            sptrAsyncOuter->info("{},{},{},{},{}", miniTickerArr[symbol_iter.second].timestamp,
+                                                   miniTickerArr[symbol_iter.second].symbol,
+                                                   miniTickerArr[symbol_iter.second].price,
+                                                   miniTickerArr[symbol_iter.second].volume,
+                                                   miniTickerArr[symbol_iter.second].amount);
+        }
+
+        // 每3s推送RingMD
+        if( (mMsgCnt++)%3 )
+            return;
+        else
+        {
+            for(const auto& symbol_iter:symbol2idxUMap)
+            {
+                mdring[symbol_iter.second].PushMD(std::stod(miniTickerArr[symbol_iter.second].price));
+            }
         }
     }
     else
@@ -247,7 +282,8 @@ void MDSocket::ReInit()
 {
     try
     {
-        // 必须首先重置
+        // 首先必须重置 !
+        // 否则状态报错 !
         mWSSClient.reset();
         // 设置日志输出等级
         mWSSClient.set_access_channels(websocketpp::log::alevel::all);

@@ -17,6 +17,7 @@
 #include <sstream>
 #include <iomanip>
 /// for NS <Timer> ///
+#include <chrono>
 #include <time.h>
 #include <sys/time.h>
 /// for NS <SSL> ///
@@ -39,6 +40,16 @@ namespace Utils
     ////////////////////////////////////////////////////////
 	namespace Timer
 	{
+        inline static std::int64_t GetMillisecondTimestamp()
+        {            
+            // 获取自epoch (1970年1月1日午夜UTC) 以来的当前时间点
+            std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>\
+                                            (std::chrono::system_clock::now().time_since_epoch());
+            // 将时长转换为整数毫秒
+            std::int64_t timestamp = ms.count();
+            return timestamp;
+        }
+
 		inline static int GetTradePhase()
 		{
 			time_t t = time(0);   // get time now

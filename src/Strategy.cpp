@@ -319,7 +319,7 @@ void GridTrader::Run()
     std::chrono::seconds check_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - checkTime);
     if( start_time < std::chrono::seconds(30) )
     {
-        last_price = mdring[492].GetLastPrice();
+        last_price = mdring[376].GetLastPrice();
         return;
     }
     if( check_time < std::chrono::seconds(10) )
@@ -328,7 +328,7 @@ void GridTrader::Run()
     }
 
     checkTime = std::chrono::steady_clock::now();
-    double now_price = mdring[492].GetLastPrice();
+    double now_price = mdring[376].GetLastPrice();
     sptrAsyncLogger->debug("GridTrader::Run() now_price: {:.5f} last_price: {:.5f}", now_price, last_price );
     //std::string notifystr = "BOMEUSDT now price: " + std::to_string(now_price);
     //uptrPushDeer->Notify(notifystr);
