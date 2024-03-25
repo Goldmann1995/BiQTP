@@ -20,6 +20,7 @@ public:
 
     // Interface
     void InitSymbolIdxMap();
+    void GenerateSymbolShell();
     void RequestSymbolFilter();
     void InitSymbolFilter();
 

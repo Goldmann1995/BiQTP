@@ -144,6 +144,48 @@ void BiHelper::InitSymbolIdxMap()
 //##################################################//
 //   请求所有币种Filter
 //##################################################//
+void BiHelper::GenerateSymbolShell()
+{
+    // 打开文件流
+    std::string filename = "/home/data/dl_md.sh";
+    std::ofstream outputFile(filename, std::ios::out);
+
+    std::string outputLine = "#!/bin/bash\n";
+    outputFile << outputLine;
+    outputLine = "previous_date=$(date -d \"2 days ago\" +\"%Y-%m-%d\")\n";
+    outputFile << outputLine;
+    outputLine = "mkdir /home/data/md/$previous_date\n";
+    outputFile << outputLine;
+    outputLine = "cd /home/data/md/$previous_date\n";
+    outputFile << outputLine;
+
+    // 遍历SymbolMap
+    for(const auto& symbol_iter:symbol2idxUMap)
+    {
+        outputLine = "curl https://data.binance.vision/data/spot/daily/klines/";
+        outputLine += symbol_iter.first;
+        outputLine += "/1s/";
+        outputLine += symbol_iter.first;
+        outputLine += "-1s-$previous_date.zip -o ";
+        outputLine += symbol_iter.first;
+        outputLine += "-1s-$previous_date.zip\n";
+        outputFile << outputLine;
+
+        outputLine = "unzip ";
+        outputLine += symbol_iter.first;
+        outputLine += "-1s-$previous_date.zip\n";
+        outputFile << outputLine;
+    }
+
+    outputLine = "rm -f *.zip\n";
+    outputFile << outputLine;
+
+    outputFile.close();
+}
+
+//##################################################//
+//   请求所有币种Filter
+//##################################################//
 void BiHelper::RequestSymbolFilter()
 {
     int req_cnt = 0;
