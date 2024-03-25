@@ -30,7 +30,6 @@
 // Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern Binance::SymbolFilter symbolFilterArr[TOTAL_SYMBOL];
-extern Binance::miniTicker miniTickerArr[TOTAL_SYMBOL];
 extern MDRing mdring[TOTAL_SYMBOL];
 // AsyncLogger
 extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
@@ -140,86 +139,6 @@ void BiHelper::InitSymbolIdxMap()
             sptrAsyncLogger->error("BiHelper::InitSymbolIdxMap() nanosleep() failed !");
         }
     }  
-}
-
-//##################################################//
-//   初始化所有币种Outer
-//##################################################//
-void BiHelper::InitSymbolOuter()
-{
-    struct timespec time_to_sleep;
-    time_to_sleep.tv_sec  = 3;   // 3s to reconnect
-    time_to_sleep.tv_nsec = 0;
-
-    // curl配置
-    bool init_flag = false;
-    std::string url = mHelpUrl + "/api/v3/ticker/24hr";
-    curl_easy_setopt(mHelpCurl, CURLOPT_URL, url.c_str());    
-    while( !init_flag )
-    {
-        // 执行GET请求
-        mCurlCode = curl_easy_perform(mHelpCurl);
-        if(mCurlCode != CURLE_OK)
-        {
-            sptrAsyncLogger->error("BiHelper::InitSymbolOuter() curl_easy_perform() failed: {}", \
-                                    curl_easy_strerror(mCurlCode));
-        }
-        else
-        {
-            init_flag = true;
-            rapidjson::Document jsondoc;
-            rapidjson::ParseResult jsonret = jsondoc.Parse(mCurlBuffer.c_str());
-            // 确认没有解析出错
-            if( jsonret && jsondoc.IsArray() )
-            {
-                for(const auto& item:jsondoc.GetArray())
-                {
-                    std::string symbol;
-                    std::string price;
-                    std::string volume;
-                    std::string amount;
-                    int64_t timestamp = Utils::Timer::GetMillisecondTimestamp();
-                    if( item.HasMember("symbol") )
-                        symbol = item["symbol"].GetString();
-                    if( item.HasMember("lastPrice") )
-                        price = item["lastPrice"].GetString();
-                    if( item.HasMember("volume") )
-                        volume = item["volume"].GetString();
-                    if( item.HasMember("quoteVolume") )
-                        amount = item["quoteVolume"].GetString();
-                    
-                    if(symbol2idxUMap.find(symbol) != symbol2idxUMap.end())
-                    {
-                        int symbol_idx = symbol2idxUMap[symbol];
-                        miniTickerArr[symbol_idx].timestamp = timestamp;
-                        miniTickerArr[symbol_idx].symbol = symbol;
-                        miniTickerArr[symbol_idx].price = price;
-                        miniTickerArr[symbol_idx].volume = volume;
-                        miniTickerArr[symbol_idx].amount = amount;
-
-                        sptrAsyncOuter->info("{},{},{},{},{}", miniTickerArr[symbol_idx].timestamp,
-                                                               miniTickerArr[symbol_idx].symbol,
-                                                               miniTickerArr[symbol_idx].price,
-                                                               miniTickerArr[symbol_idx].volume,
-                                                               miniTickerArr[symbol_idx].amount);
-                    }
-                }
-            }
-            else
-            {
-                sptrAsyncLogger->error("BiHelper::InitSymbolOuter() rapidjson Parse() Error !");
-            }
-
-            mCurlBuffer.clear();
-        }
-
-        // 重连延迟
-        int result = nanosleep(&time_to_sleep, NULL);
-        if( result != 0 )
-        {
-            sptrAsyncLogger->error("BiHelper::InitSymbolIdxMap() nanosleep() failed !");
-        }
-    }
 }
 
 //##################################################//

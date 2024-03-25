@@ -2,15 +2,15 @@
  * File:        MDSocket.cpp
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-21
- * LastEdit:    2024-03-21
+ * LastEdit:    2024-03-25
  * Description: Receive MarketData by WebSocket from Binance
  */
 
 #include <unistd.h>
 #include <iostream>
 #include <string>
-#include <string.h>
 #include <chrono>
+#include <cctype>   // 包含std::tolower
 // STL
 #include <unordered_map>
 // 3rd-lib
@@ -31,7 +31,6 @@
 
 // Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
-extern Binance::miniTicker miniTickerArr[TOTAL_SYMBOL];
 extern MDRing mdring[TOTAL_SYMBOL];
 // AsyncLogger
 extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
@@ -49,6 +48,7 @@ websocketpp::connection_hdl MDSocket::mConnHdl;
 MDSocket::MDSocket(const std::string& url)
 {
     mMdUrl = url;
+    InitWSSUrl();
 
     try
     {
@@ -57,7 +57,6 @@ MDSocket::MDSocket(const std::string& url)
         mWSSClient.clear_access_channels(websocketpp::log::alevel::frame_payload);
         // 初始化ASIO
         mWSSClient.init_asio();
-        // 回调函数需要声明static
         // 注册TLS初始化回调
         mWSSClient.set_tls_init_handler(bind(&OnTlsInit));
         // 注册WS消息处理回调
@@ -71,7 +70,7 @@ MDSocket::MDSocket(const std::string& url)
     }
     catch( websocketpp::exception const& e )
     {
-        sptrAsyncLogger->error("MDSocket::MDSocket() WSError: {}", e.what());
+        sptrAsyncLogger->error("MDSocket::MDSocket() WS_Error: {}", e.what());
     }
     catch( const std::exception& e )
     {
@@ -115,7 +114,7 @@ void MDSocket::Run()
         }
         catch( websocketpp::exception const& e )
         {
-            sptrAsyncLogger->error("MDSocket::Run() WSError: {}", e.what());
+            sptrAsyncLogger->error("MDSocket::Run() WS_Error: {}", e.what());
         }
         catch( const std::exception& e )
         {
@@ -133,6 +132,25 @@ void MDSocket::Run()
 }
 
 //##################################################//
+//   初始化WSSUrl
+//##################################################//
+void MDSocket::InitWSSUrl()
+{
+    mMdUrl += "stream?streams=";
+
+    for(const auto& symbol_iter:symbol2idxUMap)
+    {
+        std::string symbol(symbol_iter.first);
+        for(char& c : symbol)
+            c = std::tolower(static_cast<unsigned char>(c));
+        mMdUrl += symbol;
+        mMdUrl += "@kline_1s/";
+    }
+    // 删除最后的"/"
+    mMdUrl.pop_back();
+}
+
+//##################################################//
 //   TLS初始化回调函数
 //##################################################//
 ContextSPtr MDSocket::OnTlsInit()
@@ -145,6 +163,10 @@ ContextSPtr MDSocket::OnTlsInit()
                          boost::asio::ssl::context::no_sslv2 |
                          boost::asio::ssl::context::no_sslv3 |
                          boost::asio::ssl::context::single_dh_use);
+    }
+    catch( websocketpp::exception const& e )
+    {
+            sptrAsyncLogger->error("MDSocket::Run() WS_Error: {}", e.what());
     }
     catch( std::exception& e )
     {
@@ -159,6 +181,7 @@ ContextSPtr MDSocket::OnTlsInit()
 void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg)
 {
     //sptrAsyncLogger->info("MDSocket::OnMessage() {}", msg->get_payload());
+    //return;
 
     rapidjson::Document jsondoc;
     rapidjson::ParseResult jsonret = jsondoc.Parse(msg->get_payload().c_str());
@@ -171,66 +194,51 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
             return;
         }
 
-        // 确认data是一个非空数组
-        const rapidjson::Value& symbols = jsondoc["data"];
-        if( !symbols.IsArray() || symbols.Empty() )
+        // 确认data是一个对象
+        const rapidjson::Value& data = jsondoc["data"];
+        if( !data.IsObject() )
         {
-            sptrAsyncLogger->error("MDSocket::OnMessage() data is not Array !");
+            sptrAsyncLogger->error("MDSocket::OnMessage() data is not Object !");
             return;
         }
 
-        // 每1s接收实时行情
-        int64_t timestamp;
-        std::string symbol;
-        std::string price;
-        std::string volume;
-        std::string amount;
-        for(const auto& item : symbols.GetArray())
-        {
-            if( item.HasMember("E") )
-                timestamp = item["E"].GetInt64();
-            if( item.HasMember("s") )
-                symbol = item["s"].GetString();
-            if( item.HasMember("c") )
-                price = item["c"].GetString();
-            if( item.HasMember("v") )
-                volume = item["v"].GetString();
-            if( item.HasMember("q") )
-                amount = item["q"].GetString();
-            
-            if(symbol2idxUMap.find(symbol) != symbol2idxUMap.end())
-            {
-                int symbol_idx = symbol2idxUMap[symbol];
-                miniTickerArr[symbol_idx].timestamp = timestamp;
-                miniTickerArr[symbol_idx].symbol = symbol;
-                miniTickerArr[symbol_idx].price = price;
-                miniTickerArr[symbol_idx].volume = volume;
-                miniTickerArr[symbol_idx].amount = amount;
-            }
-        }
+        //@Binance// 每1s接收实时K线更新
+        int64_t timestamp = 0;
+        std::string symbol("");
+        int symbol_idx = 0;
 
-        // 每1s落地Outer
-        for(const auto& symbol_iter:symbol2idxUMap)
-        {
-            // think@summer
-            miniTickerArr[symbol_iter.second].timestamp = Utils::Timer::GetMillisecondTimestamp();
-            sptrAsyncOuter->info("{},{},{},{},{}", miniTickerArr[symbol_iter.second].timestamp,
-                                                   miniTickerArr[symbol_iter.second].symbol,
-                                                   miniTickerArr[symbol_iter.second].price,
-                                                   miniTickerArr[symbol_iter.second].volume,
-                                                   miniTickerArr[symbol_iter.second].amount);
-        }
-
-        // 每3s推送RingMD
-        if( (mMsgCnt++)%3 )
+        if( data.HasMember("E") )
+            timestamp = data["E"].GetInt64();
+        if( data.HasMember("s") )
+            symbol = data["s"].GetString();
+        if(symbol2idxUMap.find(symbol) == symbol2idxUMap.end())
             return;
         else
+            symbol_idx = symbol2idxUMap[symbol];
+
+        std::string price("");
+        std::string volume("");
+        std::string amount("");
+
+        // 确认kline是一个对象
+        const rapidjson::Value& kline = data["k"];
+        if( !kline.IsObject() )
         {
-            for(const auto& symbol_iter:symbol2idxUMap)
-            {
-                mdring[symbol_iter.second].PushMD(std::stod(miniTickerArr[symbol_iter.second].price));
-            }
+            sptrAsyncLogger->error("MDSocket::OnMessage() kline is not Object !");
+            return;
         }
+        if( kline.HasMember("c") )
+            price = kline["c"].GetString();
+        if( kline.HasMember("v") )
+            volume = kline["v"].GetString();
+        if( kline.HasMember("q") )
+            amount = kline["q"].GetString();
+
+        // 落地Outer
+        sptrAsyncOuter->info("{},{},{},{},{}", timestamp, symbol, price, volume, amount);
+
+        // 推送RingMD
+        mdring[symbol_idx].PushMD(std::stod(price));
     }
     else
     {
@@ -304,7 +312,7 @@ void MDSocket::ReInit()
     }
     catch( websocketpp::exception const& e )
     {
-        sptrAsyncLogger->error("MDSocket::ReInit() WSError: {}", e.what());
+        sptrAsyncLogger->error("MDSocket::ReInit() WS_Error: {}", e.what());
     }
     catch( const std::exception& e )
     {

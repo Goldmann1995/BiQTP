@@ -32,7 +32,6 @@
 
 std::unordered_map<std::string, int> symbol2idxUMap;
 Binance::SymbolFilter symbolFilterArr[TOTAL_SYMBOL];
-Binance::miniTicker miniTickerArr[TOTAL_SYMBOL];
 MDRing mdring[TOTAL_SYMBOL];
 
 

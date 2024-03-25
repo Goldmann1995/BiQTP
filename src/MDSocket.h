@@ -2,7 +2,7 @@
  * File:        MDSocket.h
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-21
- * LastEdit:    2024-03-21
+ * LastEdit:    2024-03-25
  * Description: Receive MarketData by WebSocket from Binance
  */
 
@@ -26,7 +26,10 @@ public:
 
     // 线程运行实体
     void Run();
-    
+
+    //@websocketp// 回调函数需要static
+    // 初始化WSSUrl
+    static void InitWSSUrl();
     // TLS初始化回调函数
     static ContextSPtr OnTlsInit();
     // WebSocket消息回调函数
@@ -37,7 +40,7 @@ public:
     static void OnFail(websocketpp::connection_hdl hdl);
     // WebSocket关闭回调函数
     static void OnClose(websocketpp::connection_hdl hdl);
-    // Client重新初始化
+    // WSSClient重新初始化
     static void ReInit();
 
 private:
