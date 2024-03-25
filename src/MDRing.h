@@ -25,7 +25,7 @@ public:
     const std::string& GetSymbolName();
 
     // 更新行情
-    void PushMD(double last_price);
+    void PushMD(double last_price, double last_volume, double last_amount);
     double GetLastPrice();
     int GetMDIndex();
     int GetCalMAIndex();
@@ -72,8 +72,12 @@ private:
     int buy_index[ST_SIZE];
     int sell_index[ST_SIZE];
     int cycle_cnt;
-    // 3s最新价
+    // 最新价
     double price[RING_SIZE];
+    // 成交量
+    double volume[RING_SIZE];
+    // 成交额
+    double amount[RING_SIZE];
     // MovingAverage
     double mt5m;
     double ma5m[RING_SIZE];

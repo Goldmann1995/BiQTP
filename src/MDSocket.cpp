@@ -238,7 +238,7 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
         sptrAsyncOuter->info("{},{},{},{},{}", timestamp, symbol, price, volume, amount);
 
         // 推送RingMD
-        mdring[symbol_idx].PushMD(std::stod(price));
+        mdring[symbol_idx].PushMD(std::stod(price), std::stod(volume), std::stod(amount));
     }
     else
     {

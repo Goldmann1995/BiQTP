@@ -17,7 +17,7 @@ INCLUDE_SRC = -Iinclude -Ilib
 LIB_SRC = -lcurl -lcrypto -lssl
 
 EXTRAITEM = bin/BiQTP
-CC = g++ -std=c++14 -Wall
+CC = g++ -std=c++14 -mcmodel=large -Wall
 AR = ar
 
 #####   buildproj   #####

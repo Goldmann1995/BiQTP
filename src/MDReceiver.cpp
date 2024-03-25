@@ -116,7 +116,7 @@ int MDReceiver::RequestAllPrice()
                 sptrAsyncLogger->error("MDReceiver::RequestAllPrice() jsondoc is not an array !");
                 return -2;
             }
-
+        #if 0
             for(const auto& item : jsondoc.GetArray())
             {
                 std::string str_symbol = item["symbol"].GetString();
@@ -125,9 +125,11 @@ int MDReceiver::RequestAllPrice()
                 if(symbol2idxUMap.find(str_symbol) != symbol2idxUMap.end())
                 {
                     int symbol_idx = symbol2idxUMap[str_symbol];
-                    mdring[symbol_idx].PushMD(db_price);
+                    // TODO - 增加volume和amount
+                    //mdring[symbol_idx].PushMD(db_price);
                 }
             }
+        #endif
         }
         mCurlBuffer.clear();
     }

@@ -7,13 +7,13 @@
 
 // BiQTP版本号
 #define BI_QTP_VERSION   "Alpha"
-#define BI_QTP_VERDATE   "20240324"
+#define BI_QTP_VERDATE   "20240325"
 
 
 /********** 配置 **********/
 
 // Binance币种容量上限
-#define TOTAL_SYMBOL   600
+#define TOTAL_SYMBOL   500
 
 // 策略容量
 #define ST_SIZE     100
@@ -21,22 +21,22 @@
 
 /********** RingMD **********/
 
-#define RING_SIZE   (24*60*20)
+#define RING_SIZE   (24*60*60)
 
-#define INTERVAL30S   10
-#define INTERVAL1M    20
-#define INTERVAL2M    (20*2)
-#define INTERVAL3M    (20*3)
-#define INTERVAL5M    (20*5)
-#define INTERVAL10M   (20*10)
-#define INTERVAL20M   (20*20)
-#define INTERVAL25M   (20*25)
-#define INTERVAL30M   (20*30)
-#define INTERVAL60M   (20*60)
-#define INTERVAL100M  (20*100)
-#define INTERVAL120M  (20*120)
-#define INTERVAL180M  (20*180)
-#define INTERVAL240M  (20*240)
+#define INTERVAL30S   30
+#define INTERVAL1M    60
+#define INTERVAL2M    (60*2)
+#define INTERVAL3M    (60*3)
+#define INTERVAL5M    (60*5)
+#define INTERVAL10M   (60*10)
+#define INTERVAL20M   (60*20)
+#define INTERVAL25M   (60*25)
+#define INTERVAL30M   (60*30)
+#define INTERVAL60M   (60*60)
+#define INTERVAL100M  (60*100)
+#define INTERVAL120M  (60*60*2)
+#define INTERVAL180M  (60*60*3)
+#define INTERVAL240M  (60*60*4)
 
 
 /********** MDReceiver **********/
@@ -54,9 +54,6 @@
 
 
 /********** Strategy AdvancedSLR1 **********/
-
-
-/********** Strategy AdvancedSLR2 **********/
 
 
 /************************************/

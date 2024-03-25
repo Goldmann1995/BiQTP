@@ -64,10 +64,12 @@ const std::string& MDRing::GetSymbolName()
 //##################################################//
 //   更新行情
 //##################################################//
-void MDRing::PushMD(double last_price)
+void MDRing::PushMD(double last_price, double last_volume, double last_amount)
 {
     int index = md_index+1%RING_SIZE;
     price[index] = last_price;
+    volume[index] = last_volume;
+    amount[index] = last_amount;
     if(md_index+1==RING_SIZE)
         cycle_cnt++;
     md_index=index;

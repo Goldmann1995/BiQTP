@@ -53,7 +53,7 @@ void Calculator::Run()
 {
     struct timespec time_to_sleep;
     time_to_sleep.tv_sec  = 0;
-    time_to_sleep.tv_nsec = 1000*10;   // 10us
+    time_to_sleep.tv_nsec = 1000*100;   // 100us
 
 	while( true )
 	{
