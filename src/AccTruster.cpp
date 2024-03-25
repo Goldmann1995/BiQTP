@@ -22,7 +22,6 @@
 #include <Utils.h>
 #include "AccTruster.h"
 
-
 // Extern
 extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 

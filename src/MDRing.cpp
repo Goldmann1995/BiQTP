@@ -66,11 +66,11 @@ const std::string& MDRing::GetSymbolName()
 //##################################################//
 void MDRing::PushMD(double last_price, double last_volume, double last_amount)
 {
-    int index = md_index+1%RING_SIZE;
+    int index = (md_index+1)%RING_SIZE;
     price[index] = last_price;
     volume[index] = last_volume;
     amount[index] = last_amount;
-    if(md_index+1==RING_SIZE)
+    if((md_index+1)==RING_SIZE)
         cycle_cnt++;
     md_index=index;
 }
@@ -110,7 +110,7 @@ void MDRing::CalADRatio()
         return;
     else   // cal_adr_index
     {
-        int next_index = cal_adr_index+1%RING_SIZE;
+        int next_index = (cal_adr_index+1)%RING_SIZE;
 
         if(cycle_cnt == 0)
         {
@@ -256,7 +256,7 @@ void MDRing::CalMovingAverage()
         return;
     else   // cal_ma_index
     {
-        int next_index = cal_ma_index+1%RING_SIZE;
+        int next_index = (cal_ma_index+1)%RING_SIZE;
         mt5m += price[next_index];
         mt25m += price[next_index];
         mt100m += price[next_index];

@@ -22,10 +22,6 @@ public:
 
     // 线程运行实体
     void Run();
-
-private:
-    std::chrono::time_point<std::chrono::steady_clock> runTime;
-    std::chrono::time_point<std::chrono::steady_clock> nowTime;
 };
 
 //############################################################//

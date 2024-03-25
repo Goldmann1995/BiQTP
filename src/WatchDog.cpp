@@ -46,8 +46,7 @@ extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 //##################################################//
 WatchDog::WatchDog()
 {
-    runTime = std::chrono::steady_clock::now();
-    nowTime = std::chrono::steady_clock::now();
+    // ~
 }
 
 //##################################################//
@@ -64,24 +63,30 @@ WatchDog::~WatchDog()
 void WatchDog::Run()
 {
     struct timespec time_to_sleep;
+#if !_BACK_TEST_
     time_to_sleep.tv_sec  = 3;   // 3s
+#else
+    time_to_sleep.tv_sec  = 1;   // 1s
+#endif
     time_to_sleep.tv_nsec = 0;
 
 	while( true )
 	{
+    #if !_BACK_TEST_
         // 每3s运行一次
-        //nowTime = std::chrono::steady_clock::now();
-        //std::chrono::seconds elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - runTime);
-        //if( elapsed_time >= std::chrono::seconds(3) )
-        {
-            //runTime = std::chrono::steady_clock::now();
-
-            //int md_index      = mdring[0].GetMDIndex();
-            //int cal_ma_index  = mdring[0].GetCalMAIndex();
-            //int cal_adr_index = mdring[0].GetCalADRIndex();
-            /*sptrAsyncLogger->info("WatchDog::Run() MDIndex={} CalMAIndex={} CalADRIndex={}", \
-                                   md_index, cal_ma_index, cal_adr_index);*/
-        }
+        int md_index      = mdring[376].GetMDIndex();
+        int cal_ma_index  = mdring[376].GetCalMAIndex();
+        int cal_adr_index = mdring[376].GetCalADRIndex();
+        sptrAsyncLogger->info("WatchDog::Run() MDIndex={} CalMAIndex={} CalADRIndex={}", \
+                               md_index, cal_ma_index, cal_adr_index);
+    #else
+        // 每1s运行一次
+        int md_index      = mdring[376].GetMDIndex();
+        int cal_ma_index  = mdring[376].GetCalMAIndex();
+        int cal_adr_index = mdring[376].GetCalADRIndex();
+        sptrAsyncLogger->info("WatchDog::Run() MDIndex={} CalMAIndex={} CalADRIndex={}", \
+                               md_index, cal_ma_index, cal_adr_index);
+    #endif
 
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )

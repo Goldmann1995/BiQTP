@@ -9,24 +9,24 @@
 #include <unistd.h>
 #include <iostream>
 #include <string>
-#include <string.h>
-#include <ctime>
 #include <chrono>
 #include <unordered_map>
-
+// 3rd-lib
 #include <curl/curl.h>
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
-
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/fmt/ostr.h>
+// QTP
 #include "Macro.h"
 #include "MDRing.h"
 #include "Calculator.h"
 
+// Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
-extern std::shared_ptr<spdlog::logger> sptrAsyncLogger;
+extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 
 
 //##################################################//
@@ -53,10 +53,15 @@ void Calculator::Run()
 {
     struct timespec time_to_sleep;
     time_to_sleep.tv_sec  = 0;
+#if !_BACK_TEST_
     time_to_sleep.tv_nsec = 1000*100;   // 100us
+#else
+    time_to_sleep.tv_nsec = 1000*10;   // 10us
+#endif
 
 	while( true )
 	{
+    #if !_BACK_TEST_
         nowTime = std::chrono::steady_clock::now();
         std::chrono::milliseconds elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - calTime);
         if( elapsed_time >= std::chrono::milliseconds(1) )
@@ -64,6 +69,9 @@ void Calculator::Run()
             calTime = std::chrono::steady_clock::now();
             CalculateLastPrice();
         }
+    #else
+        CalculateLastPrice();
+    #endif
 
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )

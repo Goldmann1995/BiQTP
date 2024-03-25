@@ -59,10 +59,15 @@ void StrategyBOX::Run()
 {
     struct timespec time_to_sleep;
     time_to_sleep.tv_sec  = 0;
+#if !_BACK_TEST_
+    time_to_sleep.tv_nsec = 1000*100;   // 100us
+#else
     time_to_sleep.tv_nsec = 1000*10;   // 10us
+#endif
 
 	while( true )
 	{
+    #if !_BACK_TEST_
         nowTime = std::chrono::steady_clock::now();
         std::chrono::milliseconds elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - runTime);
         // 每1ms运行一次
@@ -73,6 +78,10 @@ void StrategyBOX::Run()
             for(auto &strategy:strategyVec)
                 strategy->Run();
         }
+    #else
+        for(auto& strategy : strategyVec)
+            strategy->Run();
+    #endif
 
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )

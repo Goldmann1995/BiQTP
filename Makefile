@@ -9,7 +9,7 @@ all: buildproj
 #####   QTP_MACRO   #####
 QTP_SRC = lib/inih/ini.c lib/inih/INIReader.cpp \
 		  include/ThreadBase.cpp include/BiDef.cpp include/BiFilter.cpp \
-		  src/MDRing.cpp src/MDReceiver.cpp src/MDSocket.cpp \
+		  src/MDRing.cpp src/MDReplayer.cpp src/MDReceiver.cpp src/MDSocket.cpp \
 		  src/Calculator.cpp src/Strategy.cpp src/StrategyBOX.cpp \
 		  src/BiHelper.cpp src/BiTrader.cpp src/AccTruster.cpp \
 		  src/WatchDog.cpp src/PushDeer.cpp src/BiQTP.cpp

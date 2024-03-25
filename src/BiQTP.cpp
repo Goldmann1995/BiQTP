@@ -36,6 +36,7 @@
 #include "BiHelper.h"
 #include "MDSocket.h"
 #include "MDReceiver.h"
+#include "MDReplayer.h"
 #include "Calculator.h"
 #include "Strategy.h"
 #include "StrategyBOX.h"
@@ -58,6 +59,7 @@ std::shared_ptr<spdlog::async_logger> sptrAsyncOuter = nullptr;
 // uptrModules
 std::unique_ptr<MDSocket> uptrMDSocket = nullptr;
 //std::unique_ptr<MDReceiver> uptrMDReceiver = nullptr;
+std::unique_ptr<MDReplayer> uptrMDReplayer = nullptr;
 std::unique_ptr<Calculator> uptrCalculator = nullptr;
 std::unique_ptr<StrategyBOX> uptrStrategyBOX = nullptr;
 std::unique_ptr<AccTruster> uptrAccTruster = nullptr;
@@ -172,18 +174,23 @@ int main(int argc, char *argv[])
     helper.InitSymbolIdxMap();
     helper.InitSymbolFilter();
 
-
+#if !_BACK_TEST_
     /********** MDSocket **********/
     uptrMDSocket = std::make_unique<MDSocket>(bi_wss_url);
     uptrMDSocket->Start();
     uptrMDSocket->SetSelfTName((char *)"MDSocket");
-
+#endif
 
     /********** MDReceiver **********/
     //uptrMDReceiver = std::make_unique<MDReceiver>(bi_api_url);
     //uptrMDReceiver->Start();
     //uptrMDReceiver->SetSelfTName((char *)"MDReceiver");
 
+#if _BACK_TEST_
+    /********** MDReplayer **********/
+    uptrMDReplayer = std::make_unique<MDReplayer>();
+    uptrMDReplayer->Start();
+#endif
 
     /********** Calculator **********/
     uptrCalculator = std::make_unique<Calculator>();
@@ -234,8 +241,13 @@ int main(int argc, char *argv[])
 
 
     /********** Hold for Join **********/
+#if !_BACK_TEST_
     uptrMDSocket->Join();
+#endif
     //uptrMDReceiver->Join();
+#if _BACK_TEST_
+    uptrMDReplayer->Join();
+#endif
     uptrCalculator->Join();
     uptrStrategyBOX->Join();
     uptrAccTruster->Join();

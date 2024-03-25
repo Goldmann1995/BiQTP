@@ -80,13 +80,16 @@ AdvancedSLR1::~AdvancedSLR1()
 
 void AdvancedSLR1::Run()
 {
-    nowTime = std::chrono::steady_clock::now();
-    std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    if( start_time < std::chrono::seconds(670) )
-        return;
+    //nowTime = std::chrono::steady_clock::now();
+    //std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
+    //if( start_time < std::chrono::seconds(670) )
+    //    return;
 
     for(const auto& symbol_iter:symbol2idxUMap)
     {
+        if(mdring[symbol_iter.second].GetMDIndex() < 670)
+            return;
+        
         double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
         double adr5m_p1 = mdring[symbol_iter.second].GetADRatio5m(20);
@@ -150,13 +153,16 @@ AdvancedSLR2::~AdvancedSLR2()
 
 void AdvancedSLR2::Run()
 {
-    nowTime = std::chrono::steady_clock::now();
-    std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    if( start_time < std::chrono::seconds(920) )
-        return;
+    //nowTime = std::chrono::steady_clock::now();
+    //std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
+    //if( start_time < std::chrono::seconds(920) )
+    //    return;
     
     for(const auto& symbol_iter:symbol2idxUMap)
     {
+        if(mdring[symbol_iter.second].GetMDIndex() < 920)
+            return;
+        
         //double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
         double adr2m = mdring[symbol_iter.second].GetADRatio2m(0);
@@ -225,13 +231,16 @@ MACross1::~MACross1()
 
 void MACross1::Run()
 {
-    nowTime = std::chrono::steady_clock::now();
-    std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    if( start_time < std::chrono::seconds(1800) )
-        return;
+    //nowTime = std::chrono::steady_clock::now();
+    //std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
+    //if( start_time < std::chrono::seconds(1800) )
+    //    return;
     
     for(const auto& symbol_iter:symbol2idxUMap)
     {
+        if(mdring[symbol_iter.second].GetMDIndex() < 1800)
+            return;
+        
         double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
         double adr2m = mdring[symbol_iter.second].GetADRatio2m(0);
@@ -288,13 +297,16 @@ MACross2::~MACross2()
 
 void MACross2::Run()
 {
-    nowTime = std::chrono::steady_clock::now();
-    std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    if( start_time < std::chrono::seconds(6060) )
-        return;
+    //nowTime = std::chrono::steady_clock::now();
+    //std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
+    //if( start_time < std::chrono::seconds(6060) )
+    //    return;
     
     for(const auto& symbol_iter:symbol2idxUMap)
     {
+        if(mdring[symbol_iter.second].GetMDIndex() < 6060)
+            return;
+
         double ma25m = mdring[symbol_iter.second].GetMA25m(0);
         double ma100m = mdring[symbol_iter.second].GetMA100m(0);
         double ma25m_p = mdring[symbol_iter.second].GetMA25m(20);
