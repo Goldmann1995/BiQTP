@@ -225,8 +225,8 @@ int main(int argc, char *argv[])
     uptrBiTrader = std::make_unique<BiTrader>(bi_api_url, bi_api_key, bi_secret_key);
     uptrBiTrader->Start();
     uptrBiTrader->SetSelfTName((char *)"BiTrader");
-    /*uptrBiTrader->InsertOrder("BOMEUSDT", Binance::OrderSide::BUY, 0.01, 1000.0, \
-                              Binance::OrderType::MARKET, Binance::TimeInForce::GTC);*/
+    /*uptrBiTrader->InsertOrder(1, "BOMEUSDT", Binance::OrderSide::BUY, 0.008, 2000.0, \
+                              Binance::OrderType::LIMIT, Binance::TimeInForce::GTC);*/
 
 
     /********** WatchDog **********/

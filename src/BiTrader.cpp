@@ -22,7 +22,7 @@
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/fmt/ostr.h>
 // QTP
-#include "Utils.h"
+#include "Utils/CryptoUtils.hpp"
 #include "Utils/StringUtils.hpp"
 #include "BiDef.h"
 #include "BiFilter.h"
@@ -170,7 +170,7 @@ void BiTrader::InsertOrder(int strategyid, \
     auto duration = now.time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     std::string req = post_param+"timestamp="+std::to_string(millis);
-    std::string signature = Utils::SSL::GetHMAC_SHA256(mTdSecretKey, req);
+    std::string signature = CryptoUtils::GetHMAC_SHA256(mTdSecretKey, req);
     std::string data = req + "&signature=" + signature;
     // curl配置
     curl_easy_setopt(mTdCurl, CURLOPT_POSTFIELDS, data.c_str());
