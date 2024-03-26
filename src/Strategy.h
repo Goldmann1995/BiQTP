@@ -9,6 +9,15 @@
 #pragma once
 
 
+/*** 策略控制block ***/
+struct StBlock
+{
+    int pointType;   // 0=未交易 // 1=买入 // 2=卖出
+    int buyMdIndex;
+    int sellMdIndex;
+};
+
+
 //############################################################//
 //   Strategy Class
 //############################################################//
@@ -23,26 +32,17 @@ public:
 
     double GetPositiveRate();
 
-private:
+protected:
     int mStrategyID;
 
     int mPositiveCnt;
     int mNegativeCnt;
     int mOrderCnt;
 
-    double mCapital;
-    double mTotalProfit;
-    double mTotalCommission;
+    double mTotalProfitRate;
+    double mTotalCommissionRate;
 
-    std::chrono::time_point<std::chrono::steady_clock> startTime;
-    std::chrono::time_point<std::chrono::steady_clock> nowTime;
-
-    // 注册友元派生策略
-    friend class AdvancedSLR1;
-    friend class AdvancedSLR2;
-    friend class MACross1;
-    friend class MACross2;
-    friend class GridTrader;
+    StBlock mStPoint[TOTAL_SYMBOL];
 };
 
 //############################################################//
@@ -50,7 +50,7 @@ private:
 class AdvancedSLR1 : public Strategy
 {
 public:
-    AdvancedSLR1(int id, double captical);
+    AdvancedSLR1(int id);
     ~AdvancedSLR1();
 
     void Run();
@@ -61,7 +61,7 @@ public:
 class AdvancedSLR2 : public Strategy
 {
 public:
-    AdvancedSLR2(int id, double captical);
+    AdvancedSLR2(int id);
     ~AdvancedSLR2();
 
     void Run();
@@ -69,28 +69,33 @@ public:
 
 //############################################################//
 
+#if 0
 class MACross1 : public Strategy
 {
 public:
-    MACross1(int id, double captical);
+    MACross1(int id);
     ~MACross1();
 
     void Run();
 };
+#endif
 
 //############################################################//
 
+#if 0
 class MACross2 : public Strategy
 {
 public:
-    MACross2(int id, double captical);
+    MACross2(int id);
     ~MACross2();
 
     void Run();
 };
+#endif
 
 //############################################################//
 
+#if 0
 class GridTrader : public Strategy
 {
 public:
@@ -107,5 +112,6 @@ private:
     double last_price;
     std::chrono::time_point<std::chrono::steady_clock> checkTime;
 };
+#endif
 
 //############################################################//

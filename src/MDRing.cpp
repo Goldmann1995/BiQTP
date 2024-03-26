@@ -25,16 +25,16 @@ extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 //##################################################//
 MDRing::MDRing()
 {
+    mSymbol = "";
+
+    cycle_cnt = 0;
     md_index = -1;
     cal_ma_index = -1;
     cal_adr_index = -1;
 
-    for(int i=0; i<ST_SIZE; i++)
-    {
-        buy_index[i] = -1;
-        sell_index[i] = -1;
-    }
-    cycle_cnt = 0;
+    mt5m = 0.0;
+    mt25m = 0.0;
+    mt100m = 0.0;
 }
 
 //##################################################//
@@ -75,18 +75,40 @@ void MDRing::PushMD(double last_price, double last_volume, double last_amount)
     md_index=index;
 }
 
+//##################################################//
+//   获取行情Index
+//##################################################//
 int MDRing::GetMDIndex()
 {
     return md_index;
 }
 
 //##################################################//
-//   获取行情
+//   获取轮数Cnt
+//##################################################//
+int MDRing::GetCycleCnt()
+{
+    return cycle_cnt;
+}
+
+//##################################################//
+//   获取最新行情
 //##################################################//
 double MDRing::GetLastPrice()
 {
     if( md_index>=0 )
         return price[md_index];
+    else
+        return 0.0;
+}
+
+//##################################################//
+//   获取指定Index行情
+//##################################################//
+double MDRing::GetIndexPrice(int index)
+{
+    if( 0<=index && index<RING_SIZE )
+        return price[index];
     else
         return 0.0;
 }
@@ -237,88 +259,9 @@ void MDRing::CalADRatio()
     }
 }
 
-//##################################################//
-//   计算移动平均值
-//##################################################//
-void MDRing::CalMovingAverage()
-{
-    if(cal_ma_index==md_index)
-        return;
-    else   // cal_ma_index
-    {
-        int next_index = (cal_ma_index+1)%RING_SIZE;
-        mt5m += price[next_index];
-        mt25m += price[next_index];
-        mt100m += price[next_index];
-
-        if(cycle_cnt == 0)
-        {
-            if(next_index >= INTERVAL5M)
-            {
-                mt5m -= price[next_index-INTERVAL5M];
-                ma5m[next_index] = mt5m/INTERVAL5M;
-            }
-
-            if(next_index >= INTERVAL25M)
-            {
-                mt25m -= price[next_index-INTERVAL25M];
-                ma25m[next_index] = mt25m/INTERVAL25M;
-            }
-
-            if(next_index >= INTERVAL100M)
-            {
-                mt100m -= price[next_index-INTERVAL100M];
-                ma100m[next_index] = mt100m/INTERVAL100M;
-            }
-        }
-        else
-        {
-            if(next_index >= INTERVAL5M)
-            {
-                mt5m -= price[next_index-INTERVAL5M];
-                ma5m[next_index] = mt5m/INTERVAL5M;
-            }
-            else
-            {
-                mt5m -= price[RING_SIZE-INTERVAL5M+next_index];
-                ma5m[next_index] = mt5m/INTERVAL5M; 
-            }
-
-            if(next_index >= INTERVAL25M)
-            {
-                mt25m -= price[next_index-INTERVAL25M];
-                ma25m[next_index] = mt25m/INTERVAL25M;
-            }
-            else
-            {
-                mt25m -= price[RING_SIZE-INTERVAL25M+next_index];
-                ma25m[next_index] = mt25m/INTERVAL25M; 
-            }
-
-            if(next_index >= INTERVAL100M)
-            {
-                mt100m -= price[next_index-INTERVAL100M];
-                ma100m[next_index] = mt100m/INTERVAL100M;
-            }
-            else
-            {
-                mt100m -= price[RING_SIZE-INTERVAL100M+next_index];
-                ma100m[next_index] = mt100m/INTERVAL100M;
-            }
-        }
-
-        cal_ma_index = next_index;
-    }
-}
-
 int MDRing::GetADRIndex()
 {
     return cal_adr_index;
-}
-
-int MDRing::GetMAIndex()
-{
-    return cal_ma_index;
 }
 
 double MDRing::GetADRatio30s(int lead)
@@ -483,6 +426,85 @@ double MDRing::GetADRatio60m(int lead)
     }
 }
 
+//##################################################//
+//   计算移动平均值
+//##################################################//
+void MDRing::CalMovingAverage()
+{
+    if(cal_ma_index==md_index)
+        return;
+    else   // cal_ma_index
+    {
+        int next_index = (cal_ma_index+1)%RING_SIZE;
+        mt5m += price[next_index];
+        mt25m += price[next_index];
+        mt100m += price[next_index];
+
+        if(cycle_cnt == 0)
+        {
+            if(next_index >= INTERVAL5M)
+            {
+                mt5m -= price[next_index-INTERVAL5M];
+                ma5m[next_index] = mt5m/INTERVAL5M;
+            }
+
+            if(next_index >= INTERVAL25M)
+            {
+                mt25m -= price[next_index-INTERVAL25M];
+                ma25m[next_index] = mt25m/INTERVAL25M;
+            }
+
+            if(next_index >= INTERVAL100M)
+            {
+                mt100m -= price[next_index-INTERVAL100M];
+                ma100m[next_index] = mt100m/INTERVAL100M;
+            }
+        }
+        else
+        {
+            if(next_index >= INTERVAL5M)
+            {
+                mt5m -= price[next_index-INTERVAL5M];
+                ma5m[next_index] = mt5m/INTERVAL5M;
+            }
+            else
+            {
+                mt5m -= price[RING_SIZE-INTERVAL5M+next_index];
+                ma5m[next_index] = mt5m/INTERVAL5M; 
+            }
+
+            if(next_index >= INTERVAL25M)
+            {
+                mt25m -= price[next_index-INTERVAL25M];
+                ma25m[next_index] = mt25m/INTERVAL25M;
+            }
+            else
+            {
+                mt25m -= price[RING_SIZE-INTERVAL25M+next_index];
+                ma25m[next_index] = mt25m/INTERVAL25M; 
+            }
+
+            if(next_index >= INTERVAL100M)
+            {
+                mt100m -= price[next_index-INTERVAL100M];
+                ma100m[next_index] = mt100m/INTERVAL100M;
+            }
+            else
+            {
+                mt100m -= price[RING_SIZE-INTERVAL100M+next_index];
+                ma100m[next_index] = mt100m/INTERVAL100M;
+            }
+        }
+
+        cal_ma_index = next_index;
+    }
+}
+
+int MDRing::GetMAIndex()
+{
+    return cal_ma_index;
+}
+
 double MDRing::GetMA5m(int lead)
 {
     if( cycle_cnt==0 )
@@ -535,60 +557,4 @@ double MDRing::GetMA100m(int lead)
         else
             return ma100m[ST_SIZE+cal_ma_index-lead];
     }
-}
-
-void MDRing::SetBuyIndex(int stidx)
-{
-    buy_index[stidx] = cal_adr_index;
-}
-
-void MDRing::ClearBuyIndex(int stidx)
-{
-    buy_index[stidx] = -1;
-}
-
-int MDRing::GetBuyIndex(int stidx)
-{
-    return buy_index[stidx];
-}
-
-bool MDRing::EstimateBuyMax(int stidx)
-{
-    double max_price = 0.0;
-    for(int i=buy_index[stidx]; ; i++)
-    {
-        int index = i%RING_SIZE;
-        max_price = std::max(max_price, price[index]);
-        if(index == md_index)
-            break;
-    }
-    if( max_price > price[md_index] )
-        return true;
-    else
-        return false;
-}
-
-void MDRing::SetSellIndex(int stidx)
-{
-    sell_index[stidx] = cal_adr_index;
-}
-
-void MDRing::ClearSellIndex(int stidx)
-{
-    sell_index[stidx] = -1;
-}
-
-int MDRing::GetSellIndex(int stidx)
-{
-    return sell_index[stidx];
-}
-
-int MDRing::GetSellDuration(int stidx)
-{
-    return cal_adr_index-sell_index[stidx];
-}
-
-double MDRing::GetProfit(int stidx, double base)
-{
-    return (price[cal_adr_index]-price[buy_index[stidx]])*base/price[buy_index[stidx]];
 }

@@ -551,14 +551,6 @@ namespace Utils
 		return IsFileExists(std::string(filename));
 	};
 
-	// inline static std::string get_log_shm_segname()
-	// {
-	// 	std::stringstream ss;
-	// 	//ss << "fastcount-log-" << utils::get_date();
-	// 	ss << "fastcount-log-" << Timer::GetDate();
-	// 	return ss.str();
-	// };
-
     /************************************************************************/
     // 函数名:    GetOutFileDir
     // 函数功能:  获取当日Out文件目录
@@ -591,27 +583,6 @@ namespace Utils
 		std::stringstream ss;
 		ss << f << "." << std::string(buffer);
 		return ss.str();
-	};
-
-    /************************************************************************/
-    // 函数名:    PriceRound
-    // 函数功能:  转换浮点精度
-    // 函数参数:  double src 待转换浮点数
-    //            int bits 精度位数
-    //            (0表示保留小数点后0位小数，1表示保留1位小数)
-    // 函数返回值: 精度转换结果
-    /************************************************************************/
-    // tips summer@20221024 - 以5结尾的小数存在四舍五入误差
-    // Utils::PriceRound(11.24999999, 2) ===> 11.25
-    // Utils::PriceRound(11.2451, 2) ===> 11.25
-    // Utils::PriceRound(11.245, 2) ===> 11.24
-    // Utils::PriceRound(11.244, 2) ===> 11.24
-	inline static double PriceRound(double src, int bits)
-	{
-		std::stringstream ss; 
-        ss << std::fixed << std::setprecision(bits) << src;
-        ss >> src;
-        return src;
 	};
 }
 

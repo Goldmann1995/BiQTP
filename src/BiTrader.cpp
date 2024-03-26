@@ -12,6 +12,7 @@
 #include <string>
 #include <chrono>
 // STL
+#include <vector>
 #include <unordered_map>
 // 3rd-lib
 #include <curl/curl.h>
@@ -21,9 +22,10 @@
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/fmt/ostr.h>
 // QTP
-#include <Utils.h>
-#include <BiDef.h>
-#include <BiFilter.h>
+#include "Utils.h"
+#include "Utils/StringUtils.hpp"
+#include "BiDef.h"
+#include "BiFilter.h"
 #include "Macro.h"
 #include "BiTrader.h"
 
@@ -40,6 +42,10 @@ std::string BiTrader::mCurlBuffer;
 //##################################################//
 BiTrader::BiTrader(const std::string& url, const std::string& api_key, const std::string& secret_key)
 {
+    // strategy
+    TdUnit = 100.0;
+
+    // key初始化
     mTdUrl = url;
     mTdApiKey = api_key;
     mTdSecretKey = secret_key;
@@ -76,21 +82,49 @@ BiTrader::~BiTrader()
 void BiTrader::Run()
 {
     struct timespec time_to_sleep;
-    time_to_sleep.tv_sec  = 3;   // 3s
+    time_to_sleep.tv_sec  = 1;   // 1s
     time_to_sleep.tv_nsec = 0;
 
 	while( true )
 	{
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )
-            sptrAsyncLogger->error("OrderManager::Run() nanosleep() failed !");
+            sptrAsyncLogger->error("BiTrader::Run() nanosleep() failed !");
 	}
 }
 
 //##################################################//
-//   报单
+//   策略报单信号
 //##################################################//
-void BiTrader::InsertOrder(std::string symbol, \
+void BiTrader::StInsertSignal(int strategyid, \
+                              std::string symbol, \
+                              Binance::OrderSide side, \
+                              double price )
+{
+    if(side==Binance::OrderSide::BUY)
+    {
+        double qty = TdUnit/price;
+        InsertOrder(strategyid, symbol, side, price, qty, Binance::OrderType::MARKET, Binance::TimeInForce::GTC);
+    }
+    else if(side==Binance::OrderSide::SELL)
+    {
+        double qty = 0.0;
+        for(auto& order_block : mStrategyOrders[strategyid])
+        {
+            if(order_block.symbol==symbol)
+                qty = order_block.totalQty - order_block.commissionQty;
+        }
+        InsertOrder(strategyid, symbol, side, price, qty, Binance::OrderType::MARKET, Binance::TimeInForce::GTC);
+    }
+    else
+        sptrAsyncLogger->error("BiTrader::StInsertSignal() Insert side Error !");
+}
+
+//##################################################//
+//   币安报单
+//##################################################//
+void BiTrader::InsertOrder(int strategyid, \
+                           std::string symbol, \
                            Binance::OrderSide side, \
                            double price, \
                            double qty, \
@@ -102,8 +136,8 @@ void BiTrader::InsertOrder(std::string symbol, \
     std::string order_side = GetOrderSide(side);
     std::string order_type = GetOrderType(type);
     std::string order_tif = GetTimeInForce(tif);
-    std::string order_price = double2string(price, symbolFilterArr[index].GetTickSize());
-    std::string order_qty = double2string(qty, symbolFilterArr[index].GetStepSize());
+    std::string order_price = StringUtils::double2string(price, symbolFilterArr[index].GetTickSize());
+    std::string order_qty = StringUtils::double2string(qty, symbolFilterArr[index].GetStepSize());
     if( price < symbolFilterArr[index].GetMinPrice() || 
         price > symbolFilterArr[index].GetMaxPrice() )
     {
@@ -127,7 +161,8 @@ void BiTrader::InsertOrder(std::string symbol, \
     post_param += "type=" + order_type + "&";
     if(type==Binance::OrderType::LIMIT)
         post_param += "timeInForce=" + order_tif + "&";
-    post_param += "price=" + order_price + "&";
+    if(type!=Binance::OrderType::MARKET)
+        post_param += "price=" + order_price + "&";
     post_param += "quantity=" + order_qty + "&";
 
     // 设置Curl参数
@@ -151,6 +186,7 @@ void BiTrader::InsertOrder(std::string symbol, \
     {
         sptrAsyncLogger->info("BiTrader::InsertOrder() curl_easy_perform() success: {}", \
                                 mCurlBuffer);
+        ParseInsertResponse(strategyid, mCurlBuffer);
     }
 
     mCurlBuffer.clear();
@@ -159,11 +195,68 @@ void BiTrader::InsertOrder(std::string symbol, \
 //##################################################//
 //   ~
 //##################################################//
-std::string BiTrader::double2string(double value, int precision)
+void BiTrader::ParseInsertResponse(int strategyid, std::string rsp)
 {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(precision) << value;
-    return oss.str();
+    rapidjson::Document jsondoc;
+    rapidjson::ParseResult jsonret = jsondoc.Parse(rsp.c_str());
+    // 确认没有解析出错
+    if( jsonret )
+    {
+        // 确认jsondoc是一个对象
+        if( !jsondoc.IsObject() )
+        {
+            sptrAsyncLogger->error("BiTrader::ParseInsertResponse() jsondoc is not Object !");
+            return;
+        }
+
+        std::string symbol("");
+        int64_t order_id = 0;
+        std::string side("");
+        if( jsondoc.HasMember("symbol") )
+            symbol = jsondoc["symbol"].GetString();
+        if( jsondoc.HasMember("orderId") )
+            order_id = jsondoc["orderId"].GetInt64();
+        if( jsondoc.HasMember("side") )
+            side = jsondoc["side"].GetString();
+
+        // 访问fills数组
+        const rapidjson::Value& fills = jsondoc["fills"];
+        if( !fills.IsArray() || fills.Empty() )
+        {
+            sptrAsyncLogger->error("BiTrader::ParseInsertResponse fills is not Array !");
+            return;
+        }
+
+        // 访问fills数组
+        for(const auto& fill : fills.GetArray())
+        {
+            //commissionQty
+        }
+
+        if(side=="BUY")
+        {
+            OrderBlock order_block;
+            order_block.symbol = symbol;
+            order_block.orderId = order_id;
+            // TODO
+            mStrategyOrders[strategyid].push_back(order_block);
+        }
+        else if(side=="SELL")
+        {
+            for( auto it=mStrategyOrders[strategyid].begin(); it!=mStrategyOrders[strategyid].end(); it++ )
+            {
+                if( it->symbol==symbol)
+                {
+                    mStrategyOrders[strategyid].erase(it);
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        sptrAsyncLogger->error("BiHelper::InitSymbolIdxMap() rapidjson Parse() Error !");
+    }
 }
 
 //##################################################//

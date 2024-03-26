@@ -1,11 +1,10 @@
 /*
- * File:   TimeUtils.hpp
- * Author: summer @ZMLAB
- * CreateDate: 2023-03-02
- * LastEdit:   2023-03-02
+ * File:        TimeUtils.hpp
+ * Author:      summer@SummerLab
+ * CreateDate:  2024-03-27
+ * LastEdit:    2024-03-27
  * Description: Time Utils for Linux & StockTrader
  */
-
 
 #pragma once
 
@@ -13,7 +12,6 @@
 #include <string>
 #include <string.h>
 
-//#include <sys/timeb.h>
 #include <sys/time.h>
 #include <time.h>
 #include <chrono>
@@ -42,10 +40,10 @@
 
 ////////////////////////////////////////////////////////
 ///                                                  ///
-///                   Linux工具集合                   ///
+///                 Linux时间工具集合                  ///
 ///                                                  ///
 ////////////////////////////////////////////////////////
-namespace Utils
+namespace TimeUtils
 {
     //@C++// constexpr表达式在编译过程就能确定计算结果
     constexpr int64_t MILLISECS_PER_SEC = 1000;        // 毫秒
@@ -65,112 +63,30 @@ namespace Utils
     constexpr int STOCK_CLOSE = -1;   // 收盘
 
 
-    ////////////////////////////////////////////////////////
-    ///                                                  ///
-    ///                     时间工具类                    ///
-    ///                                                  ///
-    ////////////////////////////////////////////////////////
-    class TimeUtils
+    /************************************************************************/
+    // 函数名:    GetDate
+    // 函数功能:  获取系统当日日期
+    // 函数说明:  GetDate("%Y%m%d") == 20221006
+    //           GetDate("%w") == 4
+    /************************************************************************/
+    static inline std::string GetDate(const char *date_format)
     {
-    public:
-        /************************************************************************/
-        // 函数名:    GetStockStatus
-        // 函数功能:  获取股市状态
-        /************************************************************************/
-        static inline int GetMarketStatus()
-        {
-            time_t t = time(0);   // get time now
-            struct tm *now = localtime(&t);
-
-            // 盘前
-            if( now->tm_hour < 9 )
-                return STOCK_PRE;
-            // 盘前
-            else if( now->tm_hour==9 && now->tm_min<14 )
-                return STOCK_PRE;
-            // 收盘
-            else if( now->tm_hour==15 && now->tm_min>=30 )
-                return STOCK_CLOSE;
-            // 收盘
-            else if( now->tm_hour > 15 )
-                return STOCK_CLOSE;
-            // 盘中
-            else
-                return STOCK_TRADE;
-        };
-
-        /************************************************************************/
-        // 函数名:    GetDate
-        // 函数功能:  获取系统当日日期
-        // 函数说明:  GetDate("%Y%m%d") == 20221006
-        //           GetDate("%w") == 4
-        /************************************************************************/
-        static inline std::string GetDate(const char *date_format)
-        {
-            time_t t = time(0);   // get time now
-            struct tm *now = localtime(&t);
-            char buffer[128];
-            strftime(buffer, 128, date_format, now);
-            return std::string(buffer);
-        };
-
-        /************************************************************************/
-        // 函数名:    GetDate
-        // 函数功能:  获取系统当日日期
-        // 函数说明:  默认%Y-%m-%d格式
-        /************************************************************************/
-        static inline std::string GetDate()
-        {
-            return GetDate("%Y-%m-%d");
-        };
-
-        /************************************************************************/
-        // 函数名:    GetLastTradeDate
-        // 函数功能:  获取上一个交易日日期
-        // 函数说明:  长假失效，需要手动指定
-        /************************************************************************/
-        static inline std::string GetLastTradeDate(const char *date_format)
-        {
-            time_t t = time(0);
-            struct tm *now = localtime(&t);
-
-            if( now->tm_wday == 6 )
-            {
-                t -= SECS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * 2;
-                now = localtime(&t);
-            }
-            else if( now->tm_wday == 0 )
-            {
-                t -= SECS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * 3;
-                now = localtime(&t);
-            }
-            else if( now->tm_wday == 1 )
-            {
-                t -= SECS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * 3;
-                now = localtime(&t);
-            }
-            else
-            {
-                t -= SECS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * 1;
-                now = localtime(&t);
-            }
-
-            char buffer[100];
-            strftime(buffer, 100, date_format, now);
-            return std::string(buffer);
-        };
-
-        /************************************************************************/
-        // 函数名:    GetLastTradeDate
-        // 函数功能:  获取上一个交易日日期
-        // 函数说明:  默认%Y-%m-%d格式
-        /************************************************************************/
-        static inline std::string GetLastTradeDate()
-        {
-            return GetLastTradeDate("%Y-%m-%d");
-        }
+        time_t t = time(0);   // get time now
+        struct tm *now = localtime(&t);
+        char buffer[128];
+        strftime(buffer, 128, date_format, now);
+        return std::string(buffer);
     };
 
+    /************************************************************************/
+    // 函数名:    GetDate
+    // 函数功能:  获取系统当日日期
+    // 函数说明:  默认%Y-%m-%d格式
+    /************************************************************************/
+    static inline std::string GetDate()
+    {
+        return GetDate("%Y-%m-%d");
+    };
 
     /**************************************************************/
     //   每月天数 (平年)
@@ -184,7 +100,7 @@ namespace Utils
 
     ////////////////////////////////////////////////////////
     ///                                                  ///
-    ///                    时间戳转换器                   ///
+    ///                    时间戳转换器                    ///
     ///                                                  ///
     ////////////////////////////////////////////////////////
     class TimeConverter
@@ -244,228 +160,6 @@ namespace Utils
             /***** 返回秒钟总数 (Unix时间) *****/
             return retTS;
         }
-
-        /************************************************************************/
-        // 函数名:    SZBTime2Stamp
-        // 函数功能:  将东吴FPGA深交所行情时间戳转换为Unix时间戳
-        // 函数说明:  时间格式 (int64_t)YYYYMMDDHHMMSSsss
-        /************************************************************************/
-        static inline uint64_t SZBTime2Stamp(const int64_t& szb_tmf)
-        {
-            struct tm stm;
-            memset(&stm, 0, sizeof(stm));
-            int iY, iM, iD, iH, iMin, iS;
-
-            int64_t sec = szb_tmf/1000;
-            iS = sec%100;
-            sec = sec/100;
-            iMin = sec%100;
-            sec = sec/100;
-            iH = sec%100;
-            sec = sec/100;
-            iD = sec%100;
-            sec = sec/100;
-            iM = sec%100;
-            sec = sec/100;
-            iY = sec;
-            
-            stm.tm_year = iY-1900;
-            stm.tm_mon = iM-1;
-            stm.tm_mday = iD;
-            stm.tm_hour = iH;
-            stm.tm_min = iMin;
-            stm.tm_sec = iS;
-
-            uint64_t retstamp = (uint64_t)mktime(&stm)*1000 + (szb_tmf%1000);
-            return retstamp;   // 精确到ms
-        }
-
-        /************************************************************************/
-        // 函数名:    RapidDwSZBTime2Stamp
-        // 函数功能:  将东吴FPGA深交所行情时间戳转换为Unix时间戳
-        // 函数说明:  调用RapidMakeTime实现
-        /************************************************************************/
-        static inline uint64_t RapidDwSZBTime2Stamp(const int64_t& szb_tmf)
-        {
-            int iY, iM, iD, iH, iMin, iS;
-
-            int64_t sec = szb_tmf/1000;
-            iS = sec%100;
-            sec = sec/100;
-            iMin = sec%100;
-            sec = sec/100;
-            iH = sec%100;
-            sec = sec/100;
-            iD = sec%100;
-            sec = sec/100;
-            iM = sec%100;
-            sec = sec/100;
-            iY = sec;
-
-            uint64_t retstamp = (uint64_t)RapidMakeTime(iY, iM, iD, iH, iMin, iS)*1000 + (szb_tmf%1000);
-            return retstamp;   // 精确到ms
-        }
-
-        /************************************************************************/
-        // 函数名:    SSETime2Stamp
-        // 函数功能:  将东吴FPGA上交所行情时间戳转换为Unix时间戳
-        // 函数说明:  Deep时间格式 (int32_t)HHMMSS
-        //           Tick时间格式 (int32_t)HHMMSSss  精确到百分之一秒
-        //           sse_tmf统一到百分之一秒处理
-        /************************************************************************/
-        static inline uint64_t SSETime2Stamp(const int32_t& sse_tmf)
-        {
-            struct tm stm;
-            memset(&stm, 0, sizeof(stm));
-            int iY, iM, iD, iH, iMin, iS;
-
-            int64_t sec = sse_tmf/100;
-            iS = sec%100;
-            sec = sec/100;
-            iMin = sec%100;
-            sec = sec/100;
-            iH = sec;
-            
-        #if 1   // 测试全量行情 2022.09.21
-            iY = 2022;
-            iM = 9;
-            iD = 21;
-            stm.tm_year=iY-1900;
-            stm.tm_mon=iM-1;
-            stm.tm_mday=iD;
-            stm.tm_hour=iH;
-            stm.tm_min=iMin;
-            stm.tm_sec=iS;
-        #endif
-
-        #if 0   // 生产全量行情
-            time_t timel;
-            time(&timel);
-            tm *today = gmtime(&timel);
-            stm.tm_year=today->tm_year;
-            stm.tm_mon=today->tm_mon;
-            stm.tm_mday=today->tm_mday;
-            stm.tm_hour=iH;
-            stm.tm_min=iMin;
-            stm.tm_sec=iS;
-        #endif
-
-            uint64_t retstamp = (uint64_t)mktime(&stm)*1000 + (sse_tmf%100)*10;
-            return retstamp;   // 精确到ms
-        }
-
-        /************************************************************************/
-        // 函数名:    RapidDwSSETime2Stamp
-        // 函数功能:  将东吴FPGA上交所行情时间戳转换为Unix时间戳
-        // 函数说明:  调用RapidMakeTime实现
-        /************************************************************************/
-        static inline uint64_t RapidDwSSETime2Stamp(const int32_t &dateY, const int32_t &dateM, const int32_t &dateD, \
-                                                    const int32_t &sse_tmf)
-        {
-            int iY, iM, iD, iH, iMin, iS;
-
-            int64_t sec = sse_tmf/100;
-            iS = sec%100;
-            sec = sec/100;
-            iMin = sec%100;
-            sec = sec/100;
-            iH = sec;
-            
-            iY = dateY;
-            iM = dateM;
-            iD = dateD;
-
-            uint64_t retstamp = (uint64_t)RapidMakeTime(iY, iM, iD, iH, iMin, iS)*1000 + (sse_tmf%100)*10;
-            return retstamp;   // 精确到ms
-        }
-
-        /************************************************************************/
-        // 函数名:    QNDTime2Stamp
-        // 函数功能:  将QND行情时间戳转换为Unix时间戳
-        // 函数说明:  QND时间格式 YYYYMMDD + HHMMSSsss
-        /************************************************************************/
-        static inline uint64_t QNDTime2Stamp(const int &date, const int &msec)
-        {
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            int iY, iM, iD, iH, iMin, iS;
-
-            int sec = msec/1000;
-            iS = sec%100;
-            sec = sec/100;
-            iMin = sec%100;
-            sec = sec/100;
-            iH = sec;
-
-            int day = date;
-            iD = day%100;
-            day = day/100;
-            iM = day%100;
-            day = day/100;
-            iY = day;
-            
-            stm.tm_year = iY-1900;
-            stm.tm_mon = iM-1;
-            stm.tm_mday = iD;
-            stm.tm_hour = iH;
-            stm.tm_min = iMin;
-            stm.tm_sec = iS;
-
-            /*printf("%d-%0d-%0d %0d:%0d:%0d\n", iY, iM, iD, iH, iMin, iS);*/   //标准时间格式例如：2016:08:02 12:12:30
-            uint64_t retstamp = (uint64_t)mktime(&stm)*1000 + (msec%1000);
-            return retstamp;   // 精确到ms
-        }
-
-        /************************************************************************/
-        // 函数名:    RapidQNDTime2Stamp
-        // 函数功能:  将QND行情时间戳转换为Unix时间戳
-        // 函数说明:  调用RapidMakeTime实现
-        /************************************************************************/
-        static inline uint64_t RapidQNDTime2Stamp(const int &date, const int &msec)
-        {
-            int iY, iM, iD, iH, iMin, iS;
-
-            int sec = msec/1000;
-            iS = sec%100;
-            sec = sec/100;
-            iMin = sec%100;
-            sec = sec/100;
-            iH = sec;
-
-            int day = date;
-            iD = day%100;
-            day = day/100;
-            iM = day%100;
-            day = day/100;
-            iY = day;
-
-            uint64_t retstamp = (uint64_t)RapidMakeTime(iY, iM, iD, iH, iMin, iS)*1000 + (msec%1000);
-            return retstamp;   // 精确到ms
-        }
-
-        /************************************************************************/
-        // 函数名:    RapidQNDTime2Stamp
-        // 函数功能:  将QND行情时间戳转换为Unix时间戳
-        // 函数说明:  调用RapidMakeTime实现
-        /************************************************************************/
-        static inline uint64_t RapidQNDTime2Stamp(const int &date, const int &hour, const int &min, const int &sec)
-        {
-            int iY, iM, iD, iH, iMin, iS;
-
-            iS = sec;
-            iMin = min;
-            iH = hour;
-
-            int day = date;
-            iD = day%100;
-            day = day/100;
-            iM = day%100;
-            day = day/100;
-            iY = day;
-
-            uint64_t retstamp = (uint64_t)RapidMakeTime(iY, iM, iD, iH, iMin, iS)*1000;
-            return retstamp;   // 精确到ms
-        }
     };
 
     ////////////////////////////////////////////////////////
@@ -478,7 +172,7 @@ namespace Utils
     public:
         TimeStamper() = default;
 
-        // QTS启动时必须首先执行初始化
+        // QTP启动时必须首先执行初始化
         static void init()
         {
             // 系统时钟

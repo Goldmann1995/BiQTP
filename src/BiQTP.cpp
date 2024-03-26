@@ -201,16 +201,16 @@ int main(int argc, char *argv[])
 
     /********** StrategyBOX **********/
     uptrStrategyBOX = std::make_unique<StrategyBOX>();
-    AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1, 1000.0);
-    AdvancedSLR2 *aslr2 = new AdvancedSLR2(ASLR2, 1000.0);
-    MACross1 *macs1 = new MACross1(MACROSS1, 1000.0);
-    MACross2 *macs2 = new MACross2(MACROSS2, 1000.0);
-    GridTrader *grid = new GridTrader(GRID);
+    AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1);
+    AdvancedSLR2 *aslr2 = new AdvancedSLR2(ASLR2);
+    //MACross1 *macs1 = new MACross1(MACROSS1, 1000.0);
+    //MACross2 *macs2 = new MACross2(MACROSS2, 1000.0);
+    //GridTrader *grid = new GridTrader(GRID);
     uptrStrategyBOX->EntrustStrategy(aslr1);
     uptrStrategyBOX->EntrustStrategy(aslr2);
-    uptrStrategyBOX->EntrustStrategy(macs1);
-    uptrStrategyBOX->EntrustStrategy(macs2);
-    uptrStrategyBOX->EntrustStrategy(grid);
+    //uptrStrategyBOX->EntrustStrategy(macs1);
+    //uptrStrategyBOX->EntrustStrategy(macs2);
+    //uptrStrategyBOX->EntrustStrategy(grid);
     uptrStrategyBOX->Start();
     uptrStrategyBOX->SetSelfTName((char *)"StrategyBOX");
 
@@ -223,11 +223,10 @@ int main(int argc, char *argv[])
 
     /********** BiTrader **********/
     uptrBiTrader = std::make_unique<BiTrader>(bi_api_url, bi_api_key, bi_secret_key);
-    //uptrBiTrader->InsertOrder();
     uptrBiTrader->Start();
     uptrBiTrader->SetSelfTName((char *)"BiTrader");
-    /*uptrBiTrader->InsertOrder("BOMEUSDT", Binance::OrderSide::SELL, 0.02, 10000, \
-                              Binance::OrderType::LIMIT, Binance::TimeInForce::GTC);*/
+    /*uptrBiTrader->InsertOrder("BOMEUSDT", Binance::OrderSide::BUY, 0.01, 1000.0, \
+                              Binance::OrderType::MARKET, Binance::TimeInForce::GTC);*/
 
 
     /********** WatchDog **********/

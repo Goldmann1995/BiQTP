@@ -12,6 +12,17 @@
 #include <BiDef.h>
 
 
+/*** 订单控制block ***/
+struct OrderBlock
+{
+    std::string symbol;
+    int64_t orderId;
+    //double oriPrice;
+    double avgPrice;
+    double totalQty;
+    double commissionQty;
+};
+
 //############################################################//
 //   BiTrader Class
 //############################################################//
@@ -25,18 +36,28 @@ public:
     void Run();
 
     // Interface
-    void InsertOrder(std::string symbol, \
+    void StInsertSignal(int strategyid, \
+                        std::string symbol, \
+                        Binance::OrderSide side, \
+                        double price );
+    void InsertOrder(int strategyid, \
+                     std::string symbol, \
                      Binance::OrderSide side, \
                      double price, \
                      double qty, \
                      Binance::OrderType type, \
                      Binance::TimeInForce tif);
-    // ~
-    static std::string double2string(double value, int precision);
+    void ParseInsertResponse(int strategyid, \
+                             std::string rsp);
+
     // curl回调函数
     static size_t TDWriteCallback(void *contents, size_t size, size_t nmemb, std::string *userp);
 
 private:
+    // strategy
+    double TdUnit;
+    std::vector<OrderBlock> mStrategyOrders[ST_SIZE];
+    // Key
     std::string mTdUrl;
     std::string mTdApiKey;
     std::string mTdSecretKey;

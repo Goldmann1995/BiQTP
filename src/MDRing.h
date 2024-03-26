@@ -27,15 +27,13 @@ public:
     // 更新行情
     void PushMD(double last_price, double last_volume, double last_amount);
     int GetMDIndex();
+    int GetCycleCnt();
     double GetLastPrice();
+    double GetIndexPrice(int index);
     
-    // 计算因子
+    // ADR因子
     void CalADRatio();
-    void CalMovingAverage();
-    // 获取因子Index
     int GetADRIndex();
-    int GetMAIndex();
-    // 获取ADR因子
     double GetADRatio30s(int lead);
     double GetADRatio1m(int lead);
     double GetADRatio2m(int lead);
@@ -45,40 +43,28 @@ public:
     double GetADRatio20m(int lead);
     double GetADRatio30m(int lead);
     double GetADRatio60m(int lead);
-    // 获取MA因子
+
+    // MA因子
+    void CalMovingAverage();
+    int GetMAIndex();
     double GetMA5m(int lead);
     double GetMA25m(int lead);
     double GetMA100m(int lead);
 
-    // Buy控制
-    void SetBuyIndex(int stidx);
-    void ClearBuyIndex(int stidx);
-    int GetBuyIndex(int stidx);
-    bool EstimateBuyMax(int stidx);
-    // Sell控制
-    void SetSellIndex(int stidx);
-    void ClearSellIndex(int stidx);
-    int GetSellIndex(int stidx);
-    int GetSellDuration(int stidx);
-    // 计算Profit
-    double GetProfit(int stidx, double base);
-
 private:
     // 币种名称
     std::string mSymbol;
+    
     // index
+    int cycle_cnt;
     int md_index;
     int cal_ma_index;
     int cal_adr_index;
-    int buy_index[ST_SIZE];
-    int sell_index[ST_SIZE];
-    int cycle_cnt;
-    // 最新价
-    double price[RING_SIZE];
-    // 成交量
-    double volume[RING_SIZE];
-    // 成交额
-    double amount[RING_SIZE];
+    
+    double price[RING_SIZE];    // 最新价
+    double volume[RING_SIZE];   // 成交量
+    double amount[RING_SIZE];   // 成交额
+
     // MovingAverage
     double mt5m;
     double ma5m[RING_SIZE];
@@ -86,6 +72,7 @@ private:
     double ma25m[RING_SIZE];
     double mt100m;
     double ma100m[RING_SIZE];
+    
     // ADRatio
     double adr30s[RING_SIZE];
     double adr1m[RING_SIZE];

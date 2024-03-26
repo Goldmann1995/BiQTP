@@ -43,12 +43,15 @@ Strategy::Strategy()
     mNegativeCnt = 0;
     mOrderCnt = 0;
 
-    mCapital = 0.0;
-    mTotalProfit = 0.0;
-    mTotalCommission = 0.0;
+    mTotalProfitRate = 0.0;
+    mTotalCommissionRate = 0.0;
 
-    startTime = std::chrono::steady_clock::now();
-    nowTime = std::chrono::steady_clock::now();
+    for(int i=0; i<TOTAL_SYMBOL; i++)
+    {
+        mStPoint[i].pointType = 0;
+        mStPoint[i].buyMdIndex = -1;
+        mStPoint[i].sellMdIndex = -1;
+    }
 }
 
 //##################################################//
@@ -67,10 +70,9 @@ double Strategy::GetPositiveRate()
 //##################################################//
 //   AdvancedSLR1
 //##################################################//
-AdvancedSLR1::AdvancedSLR1(int id, double captical)
+AdvancedSLR1::AdvancedSLR1(int id)
 {
     mStrategyID = id;
-    mCapital = captical;
 }
 
 AdvancedSLR1::~AdvancedSLR1()
@@ -80,70 +82,74 @@ AdvancedSLR1::~AdvancedSLR1()
 
 void AdvancedSLR1::Run()
 {
-    //nowTime = std::chrono::steady_clock::now();
-    //std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    //if( start_time < std::chrono::seconds(670) )
-    //    return;
-
     for(const auto& symbol_iter:symbol2idxUMap)
     {
-        if(mdring[symbol_iter.second].GetMDIndex() < 670)
+        int lastMdIndex = mdring[symbol_iter.second].GetMDIndex();
+        int lastCycCnt = mdring[symbol_iter.second].GetCycleCnt();
+        if(lastCycCnt==0 && lastMdIndex<670)
             return;
         
         double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
-        double adr5m_p1 = mdring[symbol_iter.second].GetADRatio5m(20);
-        double adr5m_p2 = mdring[symbol_iter.second].GetADRatio5m(40);
-        double adr5m_p3 = mdring[symbol_iter.second].GetADRatio5m(60);
-        double adr5m_p4 = mdring[symbol_iter.second].GetADRatio5m(80);
-        double adr5m_p5 = mdring[symbol_iter.second].GetADRatio5m(100);
+        double adr5m_p1 = mdring[symbol_iter.second].GetADRatio5m(60);
+        double adr5m_p2 = mdring[symbol_iter.second].GetADRatio5m(120);
+        double adr5m_p3 = mdring[symbol_iter.second].GetADRatio5m(180);
+        double adr5m_p4 = mdring[symbol_iter.second].GetADRatio5m(240);
+        double adr5m_p5 = mdring[symbol_iter.second].GetADRatio5m(300);
 
-        if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
+        if(mStPoint[symbol_iter.second].pointType == 0 || mStPoint[symbol_iter.second].pointType == 2)
         {
-            if(adr30s<0.0)
+            if( -0.01<adr5m_p1 && adr5m_p1<0.01 && \
+                -0.01<adr5m_p2 && adr5m_p2<0.01 && \
+                -0.01<adr5m_p3 && adr5m_p3<0.01 && \
+                -0.01<adr5m_p4 && adr5m_p4<0.01 && \
+                -0.01<adr5m_p5 && adr5m_p5<0.01 && \
+                 0.01<adr30s   && adr1m >0.018 )
             {
-                double profit = mdring[symbol_iter.second].GetProfit(mStrategyID, mCapital);
-                mdring[symbol_iter.second].ClearBuyIndex(mStrategyID);
-                mdring[symbol_iter.second].SetSellIndex(mStrategyID);
+                mOrderCnt++;
+                mStPoint[symbol_iter.second].buyMdIndex = lastMdIndex;
+                mStPoint[symbol_iter.second].pointType = 1;
+                sptrAsyncLogger->debug("AdvancedSLR1::Run() BuySignal # Symbol: {} ADR_30s: {:.4f} ADR_1m: {:.4f}", \
+                                        symbol_iter.first, adr30s, adr1m);
+            }
+        }
+        else if(mStPoint[symbol_iter.second].pointType == 1)
+        {
+            if(adr1m<0.0)
+            {
+                double buyPrice = mdring[symbol_iter.second].GetIndexPrice(mStPoint[symbol_iter.second].buyMdIndex);
+                double sellPrice = mdring[symbol_iter.second].GetLastPrice();
+                double profitRate = (sellPrice-buyPrice)/buyPrice;
+                mStPoint[symbol_iter.second].sellMdIndex = lastMdIndex;
+                mStPoint[symbol_iter.second].pointType = 2;
 
-                if(profit>0.0)
+                if(profitRate>0.0)
                     mPositiveCnt++;
                 else
                     mNegativeCnt++;
 
-                mTotalProfit += profit;
-                mTotalCommission += 2*mCapital/1000.0;
+                mTotalProfitRate += profitRate;
+                mTotalCommissionRate += 2.0/1000.0;
                 sptrAsyncLogger->debug("AdvancedSLR1::Run() SellSignal # Symbol: {} WinRate: {:.2f} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
-                                        symbol_iter.first, GetPositiveRate(), profit, mTotalProfit, mTotalCommission);
+                                        symbol_iter.first, GetPositiveRate(), profitRate, mTotalProfitRate, mTotalCommissionRate);
+                // PushDeer
+                //std::string notifystr = symbol_iter.first;
+                //notifystr += " Profit=";
+                //notifystr += std::to_string(profitRate);
+                //notifystr += " Total=";
+                //notifystr += std::to_string(mTotalProfitRate);
+                //uptrPushDeer->Notify(notifystr);
             }
         }
-
-        if( -0.01<adr5m_p1 && adr5m_p1<0.01 && \
-            -0.01<adr5m_p2 && adr5m_p2<0.01 && \
-            -0.01<adr5m_p3 && adr5m_p3<0.01 && \
-            -0.01<adr5m_p4 && adr5m_p4<0.01 && \
-            -0.01<adr5m_p5 && adr5m_p5<0.01 && \
-            adr30s>0.01 && adr1m >0.018 && \
-            mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 10 )
-        {
-            if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
-            {
-                mOrderCnt++;
-                mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
-                sptrAsyncLogger->debug("AdvancedSLR1::Run() BuySignal # Symbol: {} ADR_30s: {:.4f} ADR_1m: {:.4f}", \
-                                        symbol_iter.first, adr30s, adr1m);
-            }
-        } 
     }
 }
 
 //##################################################//
 //   AdvancedSLR2
 //##################################################//
-AdvancedSLR2::AdvancedSLR2(int id, double captical)
+AdvancedSLR2::AdvancedSLR2(int id)
 {
     mStrategyID = id;
-    mCapital = captical;
 }
 
 AdvancedSLR2::~AdvancedSLR2()
@@ -152,76 +158,71 @@ AdvancedSLR2::~AdvancedSLR2()
 }
 
 void AdvancedSLR2::Run()
-{
-    //nowTime = std::chrono::steady_clock::now();
-    //std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    //if( start_time < std::chrono::seconds(920) )
-    //    return;
-    
+{    
     for(const auto& symbol_iter:symbol2idxUMap)
     {
-        if(mdring[symbol_iter.second].GetMDIndex() < 920)
+        int lastMdIndex = mdring[symbol_iter.second].GetMDIndex();
+        int lastCycCnt = mdring[symbol_iter.second].GetCycleCnt();
+        if(lastCycCnt==0 && lastMdIndex < 920)
             return;
         
-        //double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
         double adr1m = mdring[symbol_iter.second].GetADRatio1m(0);
         double adr2m = mdring[symbol_iter.second].GetADRatio2m(0);
         double adr3m = mdring[symbol_iter.second].GetADRatio3m(0);
         double adr5m = mdring[symbol_iter.second].GetADRatio5m(0);
-        double adr5m_p1 = mdring[symbol_iter.second].GetADRatio5m(100);
-        double adr5m_p2 = mdring[symbol_iter.second].GetADRatio5m(120);
-        double adr5m_p3 = mdring[symbol_iter.second].GetADRatio5m(140);
-        double adr5m_p4 = mdring[symbol_iter.second].GetADRatio5m(160);
-        double adr5m_p5 = mdring[symbol_iter.second].GetADRatio5m(180);
+        double adr5m_p1 = mdring[symbol_iter.second].GetADRatio5m(300);
+        double adr5m_p2 = mdring[symbol_iter.second].GetADRatio5m(360);
+        double adr5m_p3 = mdring[symbol_iter.second].GetADRatio5m(420);
+        double adr5m_p4 = mdring[symbol_iter.second].GetADRatio5m(480);
+        double adr5m_p5 = mdring[symbol_iter.second].GetADRatio5m(540);
 
-        if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
+        if(mStPoint[symbol_iter.second].pointType == 0 || mStPoint[symbol_iter.second].pointType == 2)
         {
-            //if(mdring[symbol_iter.second].EstimateBuyMax(mStrategyID))
-            if(adr1m<0.0)
+            if( -0.01<adr5m_p1 && adr5m_p1<0.01 && \
+                -0.01<adr5m_p2 && adr5m_p2<0.01 && \
+                -0.01<adr5m_p3 && adr5m_p3<0.01 && \
+                -0.01<adr5m_p4 && adr5m_p4<0.01 && \
+                -0.01<adr5m_p5 && adr5m_p5<0.01 && \
+                adr1m>0.003 && adr2m >0.006 && adr3m >0.012 && adr5m >0.02 )
             {
-                double profit = mdring[symbol_iter.second].GetProfit(mStrategyID, mCapital);
-                mdring[symbol_iter.second].ClearBuyIndex(mStrategyID);
-                mdring[symbol_iter.second].SetSellIndex(mStrategyID);
+                mOrderCnt++;
+                mStPoint[symbol_iter.second].buyMdIndex = lastMdIndex;
+                mStPoint[symbol_iter.second].pointType = 1;
+                sptrAsyncLogger->debug("AdvancedSLR2::Run() BuySignal # Symbol: {} ADR_1m: {:.4f} ADR_2m: {:.4f} ADR_3m: {:.4f} ADR_5m: {:.4f}", \
+                                        symbol_iter.first, adr1m, adr2m, adr3m, adr5m);
+            }
+        }
+        else if(mStPoint[symbol_iter.second].pointType == 1)
+        {
+            if(adr2m<0.0)
+            {
+                double buyPrice = mdring[symbol_iter.second].GetIndexPrice(mStPoint[symbol_iter.second].buyMdIndex);
+                double sellPrice = mdring[symbol_iter.second].GetLastPrice();
+                double profitRate = (sellPrice-buyPrice)/buyPrice;
+                mStPoint[symbol_iter.second].sellMdIndex = lastMdIndex;
+                mStPoint[symbol_iter.second].pointType = 2;
 
-                if(profit>0.0)
+                if(profitRate>0.0)
                     mPositiveCnt++;
                 else
                     mNegativeCnt++;
 
-                mTotalProfit += profit;
-                mTotalCommission += 2*mCapital/1000.0;
+                mTotalProfitRate += profitRate;
+                mTotalCommissionRate += 2.0/1000.0;
                 sptrAsyncLogger->debug("AdvancedSLR2::Run() SellSignal # Symbol: {} WinRate: {:.2f} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
-                                        symbol_iter.first, GetPositiveRate(), profit, mTotalProfit, mTotalCommission);
-            }
-        }
-
-        if( -0.01<adr5m_p1 && adr5m_p1<0.01 && \
-            -0.01<adr5m_p2 && adr5m_p2<0.01 && \
-            -0.01<adr5m_p3 && adr5m_p3<0.01 && \
-            -0.01<adr5m_p4 && adr5m_p4<0.01 && \
-            -0.01<adr5m_p5 && adr5m_p5<0.01 && \
-            adr1m>0.003 && adr2m >0.006 && adr3m >0.012 && adr5m >0.02 && \
-            mdring[symbol_iter.second].GetSellDuration(mStrategyID) > 10 )
-        {
-            if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)<0)
-            {
-                mOrderCnt++;
-                mdring[symbol_iter.second].SetBuyIndex(mStrategyID);
-                sptrAsyncLogger->debug("AdvancedSLR2::Run() BuySignal # Symbol: {} ADR_1m: {:.4f} ADR_2m: {:.4f} ADR_3m: {:.4f} ADR_5m: {:.4f}", \
-                                        symbol_iter.first, adr1m, adr2m, adr3m, adr5m);
+                                        symbol_iter.first, GetPositiveRate(), profitRate, mTotalProfitRate, mTotalCommissionRate);
             }
         }
     }
 }
 
+#if 0
 //##################################################//
 //   MACross1
 //##################################################//
-
-MACross1::MACross1(int id, double captical)
+MACross1::MACross1(int id)
 {
     mStrategyID = id;
-    mCapital = captical;
 }
 
 MACross1::~MACross1()
@@ -230,15 +231,12 @@ MACross1::~MACross1()
 }
 
 void MACross1::Run()
-{
-    //nowTime = std::chrono::steady_clock::now();
-    //std::chrono::seconds start_time = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-    //if( start_time < std::chrono::seconds(1800) )
-    //    return;
-    
+{    
     for(const auto& symbol_iter:symbol2idxUMap)
     {
-        if(mdring[symbol_iter.second].GetMDIndex() < 1800)
+        int lastMdIndex = mdring[symbol_iter.second].GetMDIndex();
+        int lastCycCnt = mdring[symbol_iter.second].GetCycleCnt();
+        if(lastCycCnt==0 && lastMdIndex < 1800)
             return;
         
         double adr30s = mdring[symbol_iter.second].GetADRatio30s(0);
@@ -250,6 +248,41 @@ void MACross1::Run()
         double ma25m = mdring[symbol_iter.second].GetMA25m(0);
         double ma5mp = mdring[symbol_iter.second].GetMA5m(20);
         double ma25mp = mdring[symbol_iter.second].GetMA25m(20);
+
+        if(mStPoint[symbol_iter.second].pointType == 0 || mStPoint[symbol_iter.second].pointType == 2)
+        {
+            if( ((ma5m-ma25m)<0.000001 && (ma5m-ma5mp)<0) || \
+                adr30s<-0.002 || adr1m<-0.003 || adr2m <-0.006 || adr3m <-0.01 )
+            {
+                mOrderCnt++;
+                mStPoint[symbol_iter.second].buyMdIndex = lastMdIndex;
+                mStPoint[symbol_iter.second].pointType == 1;
+                sptrAsyncLogger->debug("AdvancedSLR2::Run() BuySignal # Symbol: {} ADR_1m: {:.4f} ADR_2m: {:.4f} ADR_3m: {:.4f} ADR_5m: {:.4f}", \
+                                        symbol_iter.first, adr1m, adr2m, adr3m, adr5m);
+            }
+        }
+        else if(mStPoint[symbol_iter.second].pointType == 1)
+        {
+            if(adr1m<0.0)
+            {
+                double buyPrice = mdring[symbol_iter.second].GetIndexPrice(mStPoint[symbol_iter.second].buyMdIndex);
+                double sellPrice = mdring[symbol_iter.second].GetLastPrice();
+                double profitRate = (sellPrice-buyPrice)/buyPrice;
+                mStPoint[symbol_iter.second].sellMdIndex = lastMdIndex;
+                mStPoint[symbol_iter.second].pointType == 2;
+
+                if(profitRate>0.0)
+                    mPositiveCnt++;
+                else
+                    mNegativeCnt++;
+
+                mTotalProfitRate += profitRate;
+                mTotalCommissionRate += 2.0/1000.0;
+                sptrAsyncLogger->debug("AdvancedSLR2::Run() SellSignal # Symbol: {} WinRate: {:.2f} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
+                                        symbol_iter.first, GetPositiveRate(), profitRate, mTotalProfitRate, mTotalCommissionRate);
+            }
+        }
+
 
         if(mdring[symbol_iter.second].GetBuyIndex(mStrategyID)>=0)
         {
@@ -279,15 +312,16 @@ void MACross1::Run()
         }
     }
 }
+#endif
 
+#if 0
 //##################################################//
 //   MACross2
 //##################################################//
 
-MACross2::MACross2(int id, double captical)
+MACross2::MACross2(int id)
 {
     mStrategyID = id;
-    mCapital = captical;
 }
 
 MACross2::~MACross2()
@@ -339,7 +373,9 @@ void MACross2::Run()
         }
     }
 }
+#endif
 
+#if 0
 //##################################################//
 //   GridTrader
 //##################################################//
@@ -405,4 +441,4 @@ void GridTrader::Run()
         return;
     }
 }
-
+#endif

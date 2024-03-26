@@ -19,7 +19,7 @@
 #define TOTAL_SYMBOL   500
 
 // 策略容量
-#define ST_SIZE     100
+#define ST_SIZE     50
 
 
 /********** RingMD **********/
