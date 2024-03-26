@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
     BiHelper helper(bi_api_url, exchange_path);
     helper.InitSymbolIdxMap();
     helper.InitSymbolFilter();
-    //helper.GenerateSymbolShell();
+    helper.GenerateSymbolList();
 
 #if !_BACK_TEST_
     /********** MDSocket **********/

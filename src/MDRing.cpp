@@ -75,6 +75,11 @@ void MDRing::PushMD(double last_price, double last_volume, double last_amount)
     md_index=index;
 }
 
+int MDRing::GetMDIndex()
+{
+    return md_index;
+}
+
 //##################################################//
 //   获取行情
 //##################################################//
@@ -84,21 +89,6 @@ double MDRing::GetLastPrice()
         return price[md_index];
     else
         return 0.0;
-}
-
-int MDRing::GetMDIndex()
-{
-    return md_index;
-}
-
-int MDRing::GetCalMAIndex()
-{
-    return cal_ma_index;
-}
-
-int MDRing::GetCalADRIndex()
-{
-    return cal_adr_index;
 }
 
 //##################################################//
@@ -319,6 +309,16 @@ void MDRing::CalMovingAverage()
 
         cal_ma_index = next_index;
     }
+}
+
+int MDRing::GetADRIndex()
+{
+    return cal_adr_index;
+}
+
+int MDRing::GetMAIndex()
+{
+    return cal_ma_index;
 }
 
 double MDRing::GetADRatio30s(int lead)

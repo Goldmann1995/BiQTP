@@ -26,14 +26,15 @@ public:
 
     // 更新行情
     void PushMD(double last_price, double last_volume, double last_amount);
-    double GetLastPrice();
     int GetMDIndex();
-    int GetCalMAIndex();
-    int GetCalADRIndex();
+    double GetLastPrice();
     
     // 计算因子
     void CalADRatio();
     void CalMovingAverage();
+    // 获取因子Index
+    int GetADRIndex();
+    int GetMAIndex();
     // 获取ADR因子
     double GetADRatio30s(int lead);
     double GetADRatio1m(int lead);

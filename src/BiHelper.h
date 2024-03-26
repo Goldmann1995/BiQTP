@@ -2,7 +2,7 @@
  * File:        BiHelper.h
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-18
- * LastEdit:    2024-03-23
+ * LastEdit:    2024-03-25
  * Description: Get ExchInfo from Binance
  */
 
@@ -20,7 +20,7 @@ public:
 
     // Interface
     void InitSymbolIdxMap();
-    void GenerateSymbolShell();
+    void GenerateSymbolList();
     void RequestSymbolFilter();
     void InitSymbolFilter();
 

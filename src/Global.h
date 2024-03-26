@@ -25,6 +25,9 @@
 
 // QTP初始化标识
 //bool bQTPIniting = true;
+// 当前最大币种Index
+int SymbolMaxIndex = 0;
+
 
 ////////////////////////////////////
 ///              MD              ///

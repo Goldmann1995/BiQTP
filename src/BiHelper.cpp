@@ -2,7 +2,7 @@
  * File:        BiHelper.cpp
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-18
- * LastEdit:    2024-03-23
+ * LastEdit:    2024-03-25
  * Description: Get ExchInfo from Binance
  */
 
@@ -28,6 +28,7 @@
 #include "BiHelper.h"
 
 // Extern
+extern int SymbolMaxIndex;
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern Binance::SymbolFilter symbolFilterArr[TOTAL_SYMBOL];
 extern MDRing mdring[TOTAL_SYMBOL];
@@ -104,12 +105,17 @@ void BiHelper::InitSymbolIdxMap()
                 {
                     std::string symbol;
                     std::string volume;
+                    std::string bidqty;
                     if( item.HasMember("symbol") )
                         symbol = item["symbol"].GetString();
                     if( item.HasMember("volume") )
                         volume = item["volume"].GetString();
+                    if( item.HasMember("bidQty") )
+                        bidqty = item["bidQty"].GetString();
                     // 过滤不活跃币种
                     if(volume == "0.00000000")
+                        continue;
+                    if(bidqty == "0.00000000")
                         continue;
                     // 过滤USDT币种对
                     std::string ending = "USDT";
@@ -120,7 +126,7 @@ void BiHelper::InitSymbolIdxMap()
                         symbolFilterArr[index].SetSymbolName(symbol);
                         mdring[index].SetSymbolName(symbol);
                         sptrAsyncLogger->info("BiHelper::InitSymbolIdxMap() Symbol: {} Volume: {} -> Index: {}", symbol, volume, index);
-                        index++;
+                        SymbolMaxIndex = index++;
                     }
                 }
             }
@@ -142,23 +148,40 @@ void BiHelper::InitSymbolIdxMap()
 }
 
 //##################################################//
-//   请求所有币种Filter
+//   生成所有币种List
 //##################################################//
-void BiHelper::GenerateSymbolShell()
+void BiHelper::GenerateSymbolList()
 {
     // 打开文件流
-    std::string filename = "/home/data/dl_md.sh";
-    std::ofstream outputFile(filename, std::ios::out);
+    std::string filename1 = "/home/BiQTP/etc/symbolList1";
+    std::ofstream outputFile1(filename1, std::ios::out);
+    std::string outputLine1 = "";
 
-    std::string outputLine = "#!/bin/bash\n";
-    outputFile << outputLine;
-    outputLine = "previous_date=$(date -d \"2 days ago\" +\"%Y-%m-%d\")\n";
-    outputFile << outputLine;
-    outputLine = "mkdir /home/data/md/$previous_date\n";
-    outputFile << outputLine;
-    outputLine = "cd /home/data/md/$previous_date\n";
-    outputFile << outputLine;
+    // 遍历SymbolMap
+    for(const auto& symbol_iter:symbol2idxUMap)
+    {
+        outputLine1 = symbol_iter.first;
+        outputLine1 += "\n";
+        outputFile1 << outputLine1;
+    }
+    outputFile1.close();
 
+    // 打开文件流
+    std::string filename2 = "/home/BiQTP/etc/symbolList2";
+    std::ofstream outputFile2(filename2, std::ios::out);
+    std::string outputLine2 = "";
+
+    // 遍历SymbolMap
+    for(const auto& symbol_iter:symbol2idxUMap)
+    {
+        outputLine2 = "\"";
+        outputLine2 += symbol_iter.first;
+        outputLine2 += "\"\n";
+        outputFile2 << outputLine2;
+    }
+    outputFile2.close();
+
+#if 0
     // 遍历SymbolMap
     for(const auto& symbol_iter:symbol2idxUMap)
     {
@@ -179,8 +202,7 @@ void BiHelper::GenerateSymbolShell()
 
     outputLine = "rm -f *.zip\n";
     outputFile << outputLine;
-
-    outputFile.close();
+#endif
 }
 
 //##################################################//

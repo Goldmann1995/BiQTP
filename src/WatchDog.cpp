@@ -2,14 +2,14 @@
  * File:        WatchDog.cpp
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-21
- * LastEdit:    2024-03-23
+ * LastEdit:    2024-03-26
  * Description: Watch Dog for QTP
  */
 
 #include <unistd.h>
 #include <iostream>
 #include <string>
-#include <string.h>
+#include <algorithm>
 #include <chrono>
 // STL
 #include <vector>
@@ -36,6 +36,7 @@
 #include "Macro.h"
 
 // Extern
+extern int SymbolMaxIndex;
 extern MDRing mdring[TOTAL_SYMBOL];
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
@@ -64,7 +65,7 @@ void WatchDog::Run()
 {
     struct timespec time_to_sleep;
 #if !_BACK_TEST_
-    time_to_sleep.tv_sec  = 3;   // 3s
+    time_to_sleep.tv_sec  = 5;   // 5s
 #else
     time_to_sleep.tv_sec  = 1;   // 1s
 #endif
@@ -73,21 +74,28 @@ void WatchDog::Run()
 	while( true )
 	{
     #if !_BACK_TEST_
-        // 每3s运行一次
-        int md_index      = mdring[376].GetMDIndex();
-        int cal_ma_index  = mdring[376].GetCalMAIndex();
-        int cal_adr_index = mdring[376].GetCalADRIndex();
-        sptrAsyncLogger->info("WatchDog::Run() MDIndex={} CalMAIndex={} CalADRIndex={}", \
-                               md_index, cal_ma_index, cal_adr_index);
+        // 每5s运行一次
+        int md_index  = RING_SIZE;
+        int adr_index = RING_SIZE;
+        int ma_index  = RING_SIZE;
+        for(int i=0; i<=SymbolMaxIndex; i++)
+        {
+            md_index  = std::min(md_index, mdring[i].GetMDIndex());
+            adr_index = std::min(md_index, mdring[i].GetADRIndex());
+            ma_index  = std::min(md_index, mdring[i].GetMAIndex());
+        }
+        sptrAsyncLogger->info("WatchDog::Run() MDIndex={} ADRIndex={} MAIndex={}", \
+                               md_index, adr_index, ma_index);
     #else
         // 每1s运行一次
         int md_index      = mdring[376].GetMDIndex();
-        int cal_ma_index  = mdring[376].GetCalMAIndex();
-        int cal_adr_index = mdring[376].GetCalADRIndex();
+        int cal_ma_index  = mdring[376].GetMAIndex();
+        int cal_adr_index = mdring[376].GetADRIndex();
         sptrAsyncLogger->info("WatchDog::Run() MDIndex={} CalMAIndex={} CalADRIndex={}", \
                                md_index, cal_ma_index, cal_adr_index);
     #endif
 
+        // Interval-Sleep
         int result = nanosleep(&time_to_sleep, NULL);
         if( result != 0 )
         {
