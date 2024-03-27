@@ -56,7 +56,7 @@ void Calculator::Run()
 #if !_BACK_TEST_
     time_to_sleep.tv_nsec = 1000*100;   // 100us
 #else
-    time_to_sleep.tv_nsec = 1000*10;   // 10us
+    time_to_sleep.tv_nsec = 1000;   // 1us
 #endif
 
 	while( true )

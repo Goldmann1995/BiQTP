@@ -142,6 +142,10 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->info("Config # WssUrl: {}", bi_wss_url);
     sptrAsyncLogger->info("Config # ApiUrl: {}", bi_api_url);
     sptrAsyncLogger->info("Config # Apikey: {}", bi_api_key);
+    std::string md_path = uptrINIReader->Get("replayer", "MdPath", "UNKNOWN");
+    std::string md_date = uptrINIReader->Get("replayer", "MdDate", "UNKNOWN");
+    sptrAsyncLogger->info("Config # MdPath: {}", md_path);
+    sptrAsyncLogger->info("Config # MdDate: {}", md_date);
     std::string push_url = uptrINIReader->Get("notifier", "PushUrl", "UNKNOWN");
     std::string push_key = uptrINIReader->Get("notifier", "PushKey", "UNKNOWN");
     sptrAsyncLogger->info("Config # PushUrl: {}", push_url);
@@ -169,7 +173,8 @@ int main(int argc, char *argv[])
 
 #if _BACK_TEST_
     /********** MDReplayer **********/
-    uptrMDReplayer = std::make_unique<MDReplayer>();
+    uptrMDReplayer = std::make_unique<MDReplayer>(md_path);
+    uptrMDReplayer->LoadHistoryMD(md_date);
     uptrMDReplayer->Start();
     uptrMDReplayer->SetSelfTName((char *)"MDReplayer");
 #endif

@@ -7,7 +7,7 @@
 
 // BiQTP版本号
 #define BI_QTP_VERSION   "Alpha"
-#define BI_QTP_VERDATE   "20240325"
+#define BI_QTP_VERDATE   "20240328"
 
 // 回测模式
 #define _BACK_TEST_   0

@@ -88,11 +88,11 @@ void WatchDog::Run()
                                md_index, adr_index, ma_index);
     #else
         // 每1s运行一次
-        int md_index      = mdring[376].GetMDIndex();
-        int cal_ma_index  = mdring[376].GetMAIndex();
-        int cal_adr_index = mdring[376].GetADRIndex();
-        sptrAsyncLogger->info("WatchDog::Run() MDIndex={} CalMAIndex={} CalADRIndex={}", \
-                               md_index, cal_ma_index, cal_adr_index);
+        int md_index  = mdring[0].GetMDIndex();
+        int adr_index = mdring[0].GetADRIndex();
+        int ma_index  = mdring[0].GetMAIndex();
+        sptrAsyncLogger->info("WatchDog::Run() MDIndex={} ADRIndex={} MAIndex={}", \
+                               md_index, adr_index, ma_index);
     #endif
 
         // Interval-Sleep
