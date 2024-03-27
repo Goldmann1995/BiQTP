@@ -8,9 +8,7 @@
 
 #pragma once
 
-#include <iostream>
 #include <string>
-#include <sstream>
 #include <string.h>
 
 #include <openssl/sha.h>
@@ -26,41 +24,37 @@
 namespace CryptoUtils
 {
     /************************************************************************/
-    // 函数名:     GetHMAC_SHA256
-    // 函数功能:   生成基于秘钥的SHA256摘要哈希 (哈希指纹)
-    // 函数参数:   待处理字符串
-    // 函数返回值:  摘要哈希
+    // 函数名:   GetHMAC_SHA256
+    // 函数功能: 生成基于秘钥的SHA256摘要哈希 (哈希指纹)
+    // 函数说明: 
     /************************************************************************/ 
     static inline std::string GetHMAC_SHA256(const std::string &secretKey, const std::string &data)
     {
         unsigned char* digest;
         digest = HMAC(EVP_sha256(), secretKey.c_str(), secretKey.length(), \
-                        reinterpret_cast<const unsigned char*>(data.c_str()), data.length(), NULL, NULL);
+                      reinterpret_cast<const unsigned char*>(data.c_str()), data.length(), NULL, NULL);
         char mdString[65];
         for(int i = 0; i < 32; i++)
             sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);
         std::string strHMACSHA256 = std::string(mdString);
         return strHMACSHA256;
     }
-        
-#if 0
+
     /************************************************************************/
-    // 函数名:     GetSHA256
-    // 函数功能:   生成SHA256摘要哈希 (哈希指纹)
-    // 函数参数:   待处理字符串
-    // 函数返回值: 256位摘要哈希
+    // 函数名:   GetSHA256
+    // 函数功能: 生成SHA256摘要哈希 (哈希指纹)
+    // 函数说明: 
     /************************************************************************/ 
     static inline std::string GetSHA256(const std::string &strData)
     {
         // 声明返回哈希值 (256/sizeof(byte))+1
         unsigned char chHV[33] = {0};
-        // 调用SHA256接口
         SHA256((const unsigned char *)strData.c_str(), strData.length(), chHV);
-        // 返回256位摘要哈希
         std::string strSHA256 = std::string((const char *)chHV);
         return strSHA256;
     }
 
+#if 0
     /************************************************************************/
     // 函数名:     GetSHA256Hex
     // 函数功能:   生成十六进制SHA256摘要哈希 (哈希指纹)

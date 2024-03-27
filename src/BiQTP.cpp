@@ -28,11 +28,8 @@
 #include <websocketpp/client.hpp>
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
-// internal
-#include <Utils.h>
-// RingMD
+// QTP
 #include "MDRing.h"
-// Module
 #include "BiHelper.h"
 #include "MDSocket.h"
 #include "MDReceiver.h"
@@ -47,6 +44,7 @@
 // Global
 #include "Macro.h"
 #include "Global.h"
+#include "Utils/Utils.hpp"
 
 
 /********** Module-Ptr **********/
@@ -97,21 +95,6 @@ int main(int argc, char *argv[])
     }
 
     /********** 初始化spdlog **********/
-#if 0
-    // 默认队列大小8192 后台线程1
-    spdlog::init_thread_pool(1024*16, 1);
-    std::string log_path = uptrINIReader->Get("log", "LogPath", "UNKNOWN");
-    std::string out_path = uptrINIReader->Get("log", "OutPath", "UNKNOWN");
-    log_path += Utils::Timer::GetDate("%Y_%m_%d") + "_log";
-    sptrAsyncLogger = spdlog::basic_logger_mt<spdlog::async_factory>("sptrAsyncLogger", log_path);
-    sptrAsyncLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
-    // 默认是info级别
-    sptrAsyncLogger->set_level(spdlog::level::trace);
-    // 默认是off关闭自动刷新
-    sptrAsyncLogger->flush_on(spdlog::level::trace);
-#endif
-
-#if 1
     // 默认队列大小8192 后台线程1
     //@spdlog// 后台线程数量超过1会引起乱序问题
     spdlog::init_thread_pool(1024*128, 1);
@@ -138,7 +121,6 @@ int main(int argc, char *argv[])
     // 默认是off关闭自动刷新
     sptrAsyncLogger->flush_on(spdlog::level::trace);
     sptrAsyncOuter->flush_on(spdlog::level::trace);
-#endif
 
     /********** 打印QTP版本信息 **********/
     sptrAsyncLogger->info("--------------------------------------");

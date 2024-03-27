@@ -62,6 +62,7 @@
         "stack": "cpp",
         "list": "cpp",
         "set": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "__memory": "cpp"
     }
 }

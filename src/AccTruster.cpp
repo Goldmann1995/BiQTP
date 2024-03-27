@@ -19,7 +19,7 @@
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/fmt/ostr.h>
 // QTP
-#include <Utils.h>
+#include "Utils/CryptoUtils.hpp"
 #include "AccTruster.h"
 
 // Extern
@@ -90,7 +90,7 @@ void AccTruster::QueryAccount()
     auto duration = now.time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     std::string req = "timestamp="+std::to_string(millis);
-    std::string signature = Utils::SSL::GetHMAC_SHA256(mTrustSecretKey, req);
+    std::string signature = CryptoUtils::GetHMAC_SHA256(mTrustSecretKey, req);
     std::string data = req + "&signature=" + signature;
     // curl配置
     curl_easy_setopt(mTrustCurl, CURLOPT_URL, (mTrustUrl+"/api/v3/account?"+data).c_str());

@@ -21,7 +21,7 @@
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/fmt/ostr.h>
 // QTP
-#include "Utils.h"
+#include "Utils/StringUtils.hpp"
 #include "Macro.h"
 #include "BiFilter.h"
 #include "MDRing.h"
@@ -118,9 +118,7 @@ void BiHelper::InitSymbolIdxMap()
                     if(bidqty == "0.00000000")
                         continue;
                     // 过滤USDT币种对
-                    std::string ending = "USDT";
-                    if( symbol.find("USDT") != std::string::npos && \
-                        symbol.compare(symbol.length()-ending.length(), ending.length(), ending) == 0)
+                    if( StringUtils::IsSpecEnding(symbol,"USDT") )
                     {
                         symbol2idxUMap.insert(make_pair(symbol, index));
                         symbolFilterArr[index].SetSymbolName(symbol);
@@ -312,7 +310,7 @@ void BiHelper::InitSymbolFilter()
                 
                 // 访问第一个符号的filters数组
                 const rapidjson::Value& filters = symbols[0]["filters"];
-                if( !filters.IsArray() )
+                if( !filters.IsArray() || filters.Empty() )
                 {
                     sptrAsyncLogger->error("BiHelper::InitSymbolFilter() {} filters is not Array !", symbol_iter.first);
                     return;
@@ -321,19 +319,19 @@ void BiHelper::InitSymbolFilter()
                 // 遍历filters数组
                 for(const auto& filter : filters.GetArray())
                 {
-                    if (std::string(filter["filterType"].GetString()) == "PRICE_FILTER")
+                    if(std::string(filter["filterType"].GetString()) == "PRICE_FILTER")
                     {
                         symbolFilterArr[symbol_iter.second].SetMinPrice(filter["minPrice"].GetString());
                         symbolFilterArr[symbol_iter.second].SetMaxPrice(filter["maxPrice"].GetString());
                         symbolFilterArr[symbol_iter.second].SetTickSize(filter["tickSize"].GetString());
                     }
-                    else if (std::string(filter["filterType"].GetString()) == "LOT_SIZE")
+                    else if(std::string(filter["filterType"].GetString()) == "LOT_SIZE")
                     {
                         symbolFilterArr[symbol_iter.second].SetMinQty(filter["minQty"].GetString());
                         symbolFilterArr[symbol_iter.second].SetMaxQty(filter["maxQty"].GetString());
                         symbolFilterArr[symbol_iter.second].SetStepSize(filter["stepSize"].GetString());
                     }
-                    else if (std::string(filter["filterType"].GetString()) == "NOTIONAL")
+                    else if(std::string(filter["filterType"].GetString()) == "NOTIONAL")
                     {
                         symbolFilterArr[symbol_iter.second].SetMinNotional(filter["minNotional"].GetString());
                         symbolFilterArr[symbol_iter.second].SetMaxNotional(filter["maxNotional"].GetString());

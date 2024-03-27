@@ -23,7 +23,6 @@
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
 // QTP
-#include "Utils.h"
 #include "Macro.h"
 #include "BiFilter.h"
 #include "MDRing.h"
