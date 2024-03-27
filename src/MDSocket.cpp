@@ -10,7 +10,6 @@
 #include <iostream>
 #include <string>
 #include <chrono>
-#include <cctype>   // 包含std::tolower
 // STL
 #include <unordered_map>
 // 3rd-lib
@@ -23,10 +22,12 @@
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
 // QTP
+#include "Utils/StringUtils.hpp"
 #include "Macro.h"
 #include "BiFilter.h"
 #include "MDRing.h"
 #include "MDSocket.h"
+
 
 // Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
@@ -136,13 +137,9 @@ void MDSocket::Run()
 void MDSocket::InitWSSUrl()
 {
     mMdUrl += "stream?streams=";
-
     for(const auto& symbol_iter:symbol2idxUMap)
     {
-        std::string symbol(symbol_iter.first);
-        for(char& c : symbol)
-            c = std::tolower(static_cast<unsigned char>(c));
-        mMdUrl += symbol;
+        mMdUrl += StringUtils::ConvertUpper2Lower(symbol_iter.first);
         mMdUrl += "@kline_1s/";
     }
     // 删除最后的"/"

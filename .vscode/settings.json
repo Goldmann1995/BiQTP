@@ -63,6 +63,7 @@
         "list": "cpp",
         "set": "cpp",
         "type_traits": "cpp",
-        "__memory": "cpp"
+        "__memory": "cpp",
+        "memory": "cpp"
     }
 }

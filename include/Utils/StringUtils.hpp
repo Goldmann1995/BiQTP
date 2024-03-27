@@ -37,11 +37,37 @@ namespace StringUtils
     }
 
     /************************************************************************/
-    // 函数名:    double2string
+    // 函数名:    ConvertUpper2Lower
+    // 函数功能:  大写转换小写
+    // 函数说明:  ~
+    /************************************************************************/
+    static inline std::string ConvertUpper2Lower(const std::string &name)
+    {
+        std::string lowername(name);
+        for(char& c : lowername)
+            c = std::tolower(static_cast<unsigned char>(c));
+        return lowername;
+    }
+
+    /************************************************************************/
+    // 函数名:    ConvertLower2Upper
+    // 函数功能:  小写转换大写
+    // 函数说明:  ~
+    /************************************************************************/
+    static inline std::string ConvertLower2Upper(const std::string &name)
+    {
+        std::string uppername(name);
+        for(char& c : uppername)
+            c = std::toupper(static_cast<unsigned char>(c));
+        return uppername;
+    }
+
+    /************************************************************************/
+    // 函数名:    ConvertDouble2String
     // 函数功能:  转换指定精度double值
     // 函数说明:  ~
     /************************************************************************/
-    static inline std::string double2string(double value, int precision)
+    static inline std::string ConvertDouble2String(double value, int precision)
     {
         std::ostringstream oss;
         oss << std::fixed << std::setprecision(precision) << value;

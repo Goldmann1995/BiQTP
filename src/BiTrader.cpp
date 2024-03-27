@@ -136,8 +136,8 @@ void BiTrader::InsertOrder(int strategyid, \
     std::string order_side = GetOrderSide(side);
     std::string order_type = GetOrderType(type);
     std::string order_tif = GetTimeInForce(tif);
-    std::string order_price = StringUtils::double2string(price, symbolFilterArr[index].GetTickSize());
-    std::string order_qty = StringUtils::double2string(qty, symbolFilterArr[index].GetStepSize());
+    std::string order_price = StringUtils::ConvertDouble2String(price, symbolFilterArr[index].GetTickSize());
+    std::string order_qty = StringUtils::ConvertDouble2String(qty, symbolFilterArr[index].GetStepSize());
     if( price < symbolFilterArr[index].GetMinPrice() || 
         price > symbolFilterArr[index].GetMaxPrice() )
     {

@@ -7,16 +7,11 @@
 
 #include <unistd.h>
 #include <iostream>
-#include <iomanip>
-#include <sstream>
 #include <string>
-#include <chrono>
 #include <memory>
 // STL
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
-#include <queue>
 // 3rd-lib
 #include <inih/INIReader.h>
 #include <curl/curl.h>
@@ -29,8 +24,8 @@
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
 // QTP
-#include "MDRing.h"
 #include "BiHelper.h"
+#include "MDRing.h"
 #include "MDSocket.h"
 #include "MDReceiver.h"
 #include "MDReplayer.h"
@@ -122,6 +117,7 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->flush_on(spdlog::level::trace);
     sptrAsyncOuter->flush_on(spdlog::level::trace);
 
+
     /********** 打印QTP版本信息 **********/
     sptrAsyncLogger->info("--------------------------------------");
     sptrAsyncLogger->info("       ____ ____ ____ ____ ____    ");
@@ -132,6 +128,7 @@ int main(int argc, char *argv[])
     sptrAsyncLogger->info("           Version: \033[0;34m{}\033[0m    ", BI_QTP_VERSION);
     sptrAsyncLogger->info("           Date: \033[0;34m{}\033[0m    ",    BI_QTP_VERDATE);
     sptrAsyncLogger->info("--------------------------------------");
+
 
     /********** 打印Config信息 **********/
     std::string exchange_path = uptrINIReader->Get("log", "ExchangePath", "UNKNOWN");
@@ -157,6 +154,7 @@ int main(int argc, char *argv[])
     helper.InitSymbolFilter();
     helper.GenerateSymbolList();
 
+
 #if !_BACK_TEST_
     /********** MDSocket **********/
     uptrMDSocket = std::make_unique<MDSocket>(bi_wss_url);
@@ -173,7 +171,9 @@ int main(int argc, char *argv[])
     /********** MDReplayer **********/
     uptrMDReplayer = std::make_unique<MDReplayer>();
     uptrMDReplayer->Start();
+    uptrMDReplayer->SetSelfTName((char *)"MDReplayer");
 #endif
+
 
     /********** Calculator **********/
     uptrCalculator = std::make_unique<Calculator>();

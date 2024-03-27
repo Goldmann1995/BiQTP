@@ -13,7 +13,7 @@ QTP_SRC = lib/inih/ini.c lib/inih/INIReader.cpp \
 		  src/Calculator.cpp src/Strategy.cpp src/StrategyBOX.cpp \
 		  src/BiHelper.cpp src/BiTrader.cpp src/AccTruster.cpp \
 		  src/WatchDog.cpp src/PushDeer.cpp src/BiQTP.cpp
-INCLUDE_SRC = -Iinclude -Ilib
+INCLUDE_SRC = -Ilib -Iinclude
 LIB_SRC = -lcurl -lcrypto -lssl
 
 EXTRAITEM = bin/BiQTP
@@ -24,7 +24,7 @@ AR = ar
 buildproj:
 	@echo -e "\033[33mbuild proj\033[0m"
 #	@rm -f $@
-#	$(CC) $(ZETA_SRC) $(INCLUDE_SRC) $(LIB_SRC) -o bin/$@
+#	$(CC) $(QTP_SRC) $(INCLUDE_SRC) $(LIB_SRC) -o bin/$@
 	$(CC) $(QTP_SRC) $(INCLUDE_SRC) $(LIB_SRC) -o $(EXTRAITEM)
 
 #####   clean   #####
