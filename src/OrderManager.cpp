@@ -37,8 +37,8 @@ extern std::unique_ptr<BiTrader> uptrBiTrader;
 //##################################################//
 OrderManager::OrderManager()
 {
-    totalCaptical = 1000.0;
-    unitCaptical = 100.0;
+    totalCaptical = 80.0;
+    unitCaptical = 20.0;
     orderCnt = 0;
 
     for(int i=0; i<ST_SIZE; i++)
@@ -71,10 +71,10 @@ void OrderManager::Run()
             // 买入信号
             if(sig_block.side==1)
             {
-                if(unitCaptical*orderCnt<totalCaptical)
+                if( unitCaptical*orderCnt < totalCaptical )
                     StrategyBuySignal(sig_block.strategyId, sig_block.symbol, sig_block.price);
                 else
-                    sptrAsyncLogger->error("OrderManager::Run() no available Captical !");
+                    sptrAsyncLogger->error("OrderManager::Run() No Available Captical !");
             }
             // 卖出信号
             else if(sig_block.side==2)
@@ -127,7 +127,8 @@ void OrderManager::StrategyBuySignal(int strategy_id, std::string symbol, double
     double qty = unitCaptical/price;
 
     // 币安报单
-    bool ret = uptrBiTrader->InsertOrder(symbol, Binance::OrderSide::BUY, 0.0, qty, \
+    sptrAsyncLogger->info("OrderManager::StrategyBuySignal() symbol={} price={} qty={}", symbol, price, qty);
+    bool ret = uptrBiTrader->InsertOrder(symbol, Binance::OrderSide::BUY, price, qty, \
                                         Binance::OrderType::MARKET, Binance::TimeInForce::GTC, \
                                         exe_price, exe_qty, comm_qty);
     
@@ -138,12 +139,13 @@ void OrderManager::StrategyBuySignal(int strategy_id, std::string symbol, double
         order_block.symbol = symbol;
         order_block.oriPrice = price;
         order_block.exePrice = exe_price;
+        order_block.totalQty = exe_qty;
         order_block.commissionQty = comm_qty;
 
         strategyOrders[strategy_id].push_back(order_block);
     }
     else
-        sptrAsyncLogger->error("OrderManager::StrategyBuySignal() InsertOrder Error !");
+        sptrAsyncLogger->error("OrderManager::StrategyBuySignal() InsertOrder Buy Error !");
 }
 
 //##################################################//
@@ -163,14 +165,15 @@ void OrderManager::StrategySellSignal(int strategy_id, std::string symbol, doubl
     }
 
     // 币安报单
-    bool ret = uptrBiTrader->InsertOrder(symbol, Binance::OrderSide::SELL, 0.0, qty, \
+    sptrAsyncLogger->info("OrderManager::StrategySellSignal() symbol={} price={} qty={}", symbol, price, qty);
+    bool ret = uptrBiTrader->InsertOrder(symbol, Binance::OrderSide::SELL, price, qty, \
                                         Binance::OrderType::MARKET, Binance::TimeInForce::GTC, \
                                         exe_price, exe_qty, comm_qty);
     
     // 维护策略OrderVector
     if( ret )
     {
-        for(auto it = strategyOrders[strategy_id].begin(); it != strategyOrders[strategy_id].end(); it++)
+        for(auto it=strategyOrders[strategy_id].begin(); it!=strategyOrders[strategy_id].end(); it++)
         {
             if(it->symbol==symbol)
             {
@@ -180,5 +183,5 @@ void OrderManager::StrategySellSignal(int strategy_id, std::string symbol, doubl
         }
     }
     else
-        sptrAsyncLogger->error("OrderManager::StrategySellSignal() InsertOrder Error !");
+        sptrAsyncLogger->error("OrderManager::StrategySellSignal() InsertOrder Sell Error !");
 }

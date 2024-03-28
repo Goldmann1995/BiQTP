@@ -88,6 +88,7 @@ bool BiTrader::InsertOrder(std::string symbol, \
                            double& exe_qty, \
                            double& commission_qty)
 {
+#if !_BACK_TEST_
     // 设置Order参数
     int index = symbol2idxUMap[symbol];
     std::string order_side = GetOrderSide(side);
@@ -141,19 +142,21 @@ bool BiTrader::InsertOrder(std::string symbol, \
     {
         sptrAsyncLogger->error("BiTrader::InsertOrder() curl_easy_perform() Failed: {}", \
                                 curl_easy_strerror(mCurlCode));
-        sptrAsyncOuter->info("{}", mCurlBuffer);
+        sptrAsyncOuter->info("{}", curl_easy_strerror(mCurlCode));
         mCurlBuffer.clear();
         return false;
     }
     else
     {
-        sptrAsyncLogger->info("BiTrader::InsertOrder() curl_easy_perform() Success: {}", \
-                                mCurlBuffer);
+        sptrAsyncLogger->info("BiTrader::InsertOrder() curl_easy_perform() Success");
         sptrAsyncOuter->info("{}", mCurlBuffer);
         ParseInsertResp(mCurlBuffer, exe_price, exe_qty, commission_qty);
         mCurlBuffer.clear();
         return true;
     }
+#else
+    return true;
+#endif
 }
 
 //##################################################//
@@ -176,7 +179,7 @@ void BiTrader::ParseInsertResp(std::string rsp, double& exe_price, double& exe_q
         std::string symbol = "";
         double cummulative_qty = 0.0;
         if( jsondoc.HasMember("symbol") )
-            symbol = std::stod(jsondoc["symbol"].GetString());
+            symbol = jsondoc["symbol"].GetString();
         if( jsondoc.HasMember("cummulativeQuoteQty") )
             cummulative_qty = std::stod(jsondoc["cummulativeQuoteQty"].GetString());
         if( jsondoc.HasMember("executedQty") )

@@ -197,12 +197,12 @@ int main(int argc, char *argv[])
 
     /********** StrategyBOX **********/
     uptrStrategyBOX = std::make_unique<StrategyBOX>();
-    AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1);
+    //AdvancedSLR1 *aslr1 = new AdvancedSLR1(ASLR1);
     AdvancedSLR2 *aslr2 = new AdvancedSLR2(ASLR2);
     //MACross1 *macs1 = new MACross1(MACROSS1, 1000.0);
     //MACross2 *macs2 = new MACross2(MACROSS2, 1000.0);
     //GridTrader *grid = new GridTrader(GRID);
-    uptrStrategyBOX->EntrustStrategy(aslr1);
+    //uptrStrategyBOX->EntrustStrategy(aslr1);
     uptrStrategyBOX->EntrustStrategy(aslr2);
     //uptrStrategyBOX->EntrustStrategy(macs1);
     //uptrStrategyBOX->EntrustStrategy(macs2);

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <chrono>
 // STL
+#include <queue>
 #include <unordered_map>
 // 3rd-lib
 #include <curl/curl.h>
@@ -23,12 +24,14 @@
 #include "Macro.h"
 #include "MDRing.h"
 #include "PushDeer.h"
+#include "OrderManager.h"
 #include "Strategy.h"
 
 // Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
 extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
+extern std::unique_ptr<OrderManager> uptrOrderManager;
 extern std::unique_ptr<PushDeer> uptrPushDeer;
 
 
@@ -195,11 +198,16 @@ void AdvancedSLR2::Run()
                 mStPoint[symbol_iter.second].pointType = 1;
                 sptrAsyncLogger->debug("AdvancedSLR2::Run() BuySignal # Symbol: {} ADR_1m: {:.4f} ADR_2m: {:.4f} ADR_3m: {:.4f} ADR_5m: {:.4f}", \
                                         symbol_iter.first, adr1m, adr2m, adr3m, adr5m);
+                
+            #if !_BACK_TEST_
+                double buyPrice = mdring[symbol_iter.second].GetLastPrice();
+                uptrOrderManager->PushSignal(ASLR2, symbol_iter.first, 1, buyPrice);
+            #endif
             }
         }
         else if(mStPoint[symbol_iter.second].pointType == 1)
         {
-            if(adr2m<0.0)
+            if(adr5m<0.0)
             {
                 double buyPrice = mdring[symbol_iter.second].GetIndexPrice(mStPoint[symbol_iter.second].buyMdIndex);
                 double sellPrice = mdring[symbol_iter.second].GetLastPrice();
@@ -216,6 +224,10 @@ void AdvancedSLR2::Run()
                 mTotalCommissionRate += 2.0/1000.0;
                 sptrAsyncLogger->debug("AdvancedSLR2::Run() SellSignal # Symbol: {} WinRate: {:.2f} Profit: {:.4f} Total: {:.4f} Commission: {:.4f}", \
                                         symbol_iter.first, GetPositiveRate(), profitRate, mTotalProfitRate, mTotalCommissionRate);
+            
+            #if !_BACK_TEST_
+                uptrOrderManager->PushSignal(ASLR2, symbol_iter.first, 2, sellPrice);
+            #endif
             }
         }
     }
