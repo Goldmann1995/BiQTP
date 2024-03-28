@@ -24,7 +24,9 @@
 #include <websocketpp/common/thread.hpp>
 #include <websocketpp/config/asio_client.hpp>
 // QTP
+#include "BiDef.h"
 #include "BiHelper.h"
+#include "BiTrader.h"
 #include "MDRing.h"
 #include "MDSocket.h"
 #include "MDReceiver.h"
@@ -32,8 +34,8 @@
 #include "Calculator.h"
 #include "Strategy.h"
 #include "StrategyBOX.h"
+#include "OrderManager.h"
 #include "AccTruster.h"
-#include "BiTrader.h"
 #include "WatchDog.h"
 #include "PushDeer.h"
 // Global
@@ -50,13 +52,15 @@ std::shared_ptr<spdlog::async_logger> sptrAsyncLogger = nullptr;
 std::shared_ptr<spdlog::sinks::daily_file_sink_mt> sptrDailyOutSink = nullptr;
 std::shared_ptr<spdlog::async_logger> sptrAsyncOuter = nullptr;
 // uptrModules
+std::unique_ptr<BiHelper> uptrBiHelper = nullptr;
+std::unique_ptr<BiTrader> uptrBiTrader = nullptr;
 std::unique_ptr<MDSocket> uptrMDSocket = nullptr;
 //std::unique_ptr<MDReceiver> uptrMDReceiver = nullptr;
 std::unique_ptr<MDReplayer> uptrMDReplayer = nullptr;
 std::unique_ptr<Calculator> uptrCalculator = nullptr;
 std::unique_ptr<StrategyBOX> uptrStrategyBOX = nullptr;
+std::unique_ptr<OrderManager> uptrOrderManager = nullptr;
 std::unique_ptr<AccTruster> uptrAccTruster = nullptr;
-std::unique_ptr<BiTrader> uptrBiTrader = nullptr;
 std::unique_ptr<WatchDog> uptrWatchDog = nullptr;
 std::unique_ptr<PushDeer> uptrPushDeer = nullptr;
 
@@ -99,7 +103,7 @@ int main(int argc, char *argv[])
     sptrDailyLogSink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(log_path, 0, 0);
     sptrDailyLogSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
     sptrDailyOutSink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(out_path, 0, 0);
-    sptrDailyOutSink->set_pattern("%v");
+    sptrDailyOutSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
     // 创建异步Logger
     //@spdlog// block - 当消息队列满时 日志操作会阻塞直到队列中有足够的空间
     //@spdlog// overrun_oldest - 当消息队列满时 最旧的消息会被新的消息覆盖以避免阻塞
@@ -153,10 +157,16 @@ int main(int argc, char *argv[])
 
 
     /********** BiHelper **********/
-    BiHelper helper(bi_api_url, exchange_path);
-    helper.InitSymbolIdxMap();
-    helper.InitSymbolFilter();
-    helper.GenerateSymbolList();
+    uptrBiHelper = std::make_unique<BiHelper>(bi_api_url, exchange_path);
+    uptrBiHelper->InitSymbolIdxMap();
+    uptrBiHelper->InitSymbolFilter();
+    uptrBiHelper->GenerateSymbolList();
+
+
+    /********** BiTrader **********/
+    uptrBiTrader = std::make_unique<BiTrader>(bi_api_url, bi_api_key, bi_secret_key);
+    /*uptrBiTrader->InsertOrder(1, "BOMEUSDT", Binance::OrderSide::BUY, 0.008, 2000.0, \
+                              Binance::OrderType::LIMIT, Binance::TimeInForce::GTC);*/
 
 
 #if !_BACK_TEST_
@@ -178,7 +188,6 @@ int main(int argc, char *argv[])
     uptrMDReplayer->Start();
     uptrMDReplayer->SetSelfTName((char *)"MDReplayer");
 #endif
-
 
     /********** Calculator **********/
     uptrCalculator = std::make_unique<Calculator>();
@@ -202,18 +211,16 @@ int main(int argc, char *argv[])
     uptrStrategyBOX->SetSelfTName((char *)"StrategyBOX");
 
 
+    /********** OrderManager **********/
+    uptrOrderManager = std::make_unique<OrderManager>();
+    uptrOrderManager->Start();
+    uptrOrderManager->SetSelfTName((char *)"OrderManager");
+
+
     /********** AccTruster **********/
     uptrAccTruster = std::make_unique<AccTruster>(bi_api_url, bi_api_key, bi_secret_key);
     uptrAccTruster->Start();
     uptrAccTruster->SetSelfTName((char *)"AccTruster");
-
-
-    /********** BiTrader **********/
-    uptrBiTrader = std::make_unique<BiTrader>(bi_api_url, bi_api_key, bi_secret_key);
-    uptrBiTrader->Start();
-    uptrBiTrader->SetSelfTName((char *)"BiTrader");
-    /*uptrBiTrader->InsertOrder(1, "BOMEUSDT", Binance::OrderSide::BUY, 0.008, 2000.0, \
-                              Binance::OrderType::LIMIT, Binance::TimeInForce::GTC);*/
 
 
     /********** WatchDog **********/
@@ -237,8 +244,8 @@ int main(int argc, char *argv[])
 #endif
     uptrCalculator->Join();
     uptrStrategyBOX->Join();
+    uptrOrderManager->Join();
     uptrAccTruster->Join();
-    uptrBiTrader->Join();
     uptrWatchDog->Join();
 
 

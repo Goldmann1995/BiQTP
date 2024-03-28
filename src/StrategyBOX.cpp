@@ -7,29 +7,25 @@
  */
 
 #include <unistd.h>
-#include <iostream>
 #include <string>
-#include <string.h>
-#include <ctime>
 #include <chrono>
-
+// STL
 #include <vector>
 #include <unordered_map>
-
+// 3rd-liv
 #include <curl/curl.h>
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/fmt/ostr.h>
-
+// QTP
 #include "Macro.h"
 #include "MDRing.h"
+#include "Strategy.h"
 #include "StrategyBOX.h"
 
 // Extern
-//extern std::unordered_map<std::string, int> symbolUMap;
-//extern MDRing mdring[TOTAL_SYMBOL];
 extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 
 
@@ -38,6 +34,9 @@ extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
 //##################################################//
 StrategyBOX::StrategyBOX()
 {
+    totalProfit = 0.0;
+    totalCommission = 0.0;
+
     runTime = std::chrono::steady_clock::now();
     nowTime = std::chrono::steady_clock::now();
 
@@ -95,4 +94,19 @@ void StrategyBOX::Run()
 void StrategyBOX::EntrustStrategy(Strategy *strategy)
 {
     strategyVec.push_back(strategy);
+}
+
+//##################################################//
+//   注销策略
+//##################################################//
+void StrategyBOX::DetrustStrategy(int strategy_id)
+{
+    for( auto it=strategyVec.begin(); it!=strategyVec.end(); it++ )
+    {
+        if( (*it)->GetStrategyId()==strategy_id )
+        {
+            strategyVec.erase(it);
+            break;
+        }
+    }
 }

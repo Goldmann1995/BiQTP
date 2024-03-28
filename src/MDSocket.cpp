@@ -28,19 +28,18 @@
 #include "MDRing.h"
 #include "MDSocket.h"
 
-
 // Extern
 extern std::unordered_map<std::string, int> symbol2idxUMap;
 extern MDRing mdring[TOTAL_SYMBOL];
 // AsyncLogger
 extern std::shared_ptr<spdlog::async_logger> sptrAsyncLogger;
-extern std::shared_ptr<spdlog::async_logger> sptrAsyncOuter;
 
 // Static
 int MDSocket::mMsgCnt = 0;
 std::string MDSocket::mMdUrl;
 WSSClient MDSocket::mWSSClient;
 websocketpp::connection_hdl MDSocket::mConnHdl;
+
 
 //##################################################//
 //   Constructor
@@ -199,12 +198,12 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
         }
 
         //@Binance// 每1s接收实时K线更新
-        int64_t timestamp = 0;
+        //int64_t timestamp = 0;
         std::string symbol("");
         int symbol_idx = 0;
 
-        if( data.HasMember("E") )
-            timestamp = data["E"].GetInt64();
+        //if( data.HasMember("E") )
+        //    timestamp = data["E"].GetInt64();
         if( data.HasMember("s") )
             symbol = data["s"].GetString();
         if(symbol2idxUMap.find(symbol) == symbol2idxUMap.end())
@@ -229,9 +228,6 @@ void MDSocket::OnMessage(websocketpp::connection_hdl, WSSClient::message_ptr msg
             volume = kline["v"].GetString();
         if( kline.HasMember("q") )
             amount = kline["q"].GetString();
-
-        // 落地Outer
-        sptrAsyncOuter->info("{},{},{},{},{}", timestamp, symbol, price, volume, amount);
 
         // 推送RingMD
         mdring[symbol_idx].PushMD(std::stod(price), std::stod(volume), std::stod(amount));

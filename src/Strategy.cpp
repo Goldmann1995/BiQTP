@@ -62,6 +62,11 @@ Strategy::~Strategy()
     // ~
 }
 
+int Strategy::GetStrategyId()
+{
+    return mStrategyID;
+}
+
 double Strategy::GetPositiveRate()
 {
     return (double)mPositiveCnt/(double)mOrderCnt;

@@ -8,9 +8,9 @@
 
 #pragma once
 
+#include <string.h>
 #include <string>
 #include <sstream>
-#include <string.h>
 #include <cctype>   // 包含std::tolower
 
 
@@ -22,15 +22,30 @@
 namespace StringUtils
 {
     /************************************************************************/
+    // 函数名:    IsSpecStarting
+    // 函数功能:  判断字符串是否有指定开头
+    // 函数说明:  ~
+    /************************************************************************/
+    static inline bool IsSpecStarting(const std::string &symbol, const std::string &starting)
+    {
+        if( symbol.find(symbol) == std::string::npos )
+            return false;
+        if( symbol.compare(0, starting.length(), starting) )
+            return false;
+        else
+            return true;
+    }
+    
+    /************************************************************************/
     // 函数名:    IsSpecEnding
     // 函数功能:  判断字符串是否有指定结尾
     // 函数说明:  ~
     /************************************************************************/
-    static inline bool IsSpecEnding(const std::string &name, const std::string &ending)
+    static inline bool IsSpecEnding(const std::string &symbol, const std::string &ending)
     {
-        if( name.find(ending) == std::string::npos )
+        if( symbol.find(ending) == std::string::npos )
             return false;
-        if( name.compare(name.length()-ending.length(), ending.length(), ending) )
+        if( symbol.compare(symbol.length()-ending.length(), ending.length(), ending) )
             return false;
         else
             return true;

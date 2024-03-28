@@ -12,7 +12,7 @@
 /*** 策略控制block ***/
 struct StBlock
 {
-    int pointType;   // 0=未交易 // 1=买入 // 2=卖出
+    int pointType;   // 0=未交易 // 1=买入 // 2=卖出 //
     int buyMdIndex;
     int sellMdIndex;
 };
@@ -30,6 +30,7 @@ public:
     // 策略逻辑
     virtual void Run() = 0;
 
+    int GetStrategyId();
     double GetPositiveRate();
 
 protected:

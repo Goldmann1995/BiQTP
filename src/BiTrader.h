@@ -3,60 +3,38 @@
  * Author:      summer@SummerLab
  * CreateDate:  2024-03-22
  * LastEdit:    2024-03-22
- * Description: Order Manager
+ * Description: Binance Trader
  */
 
 #pragma once
 
-#include <ThreadBase.h>
-#include <BiDef.h>
-
-
-/*** 订单控制block ***/
-struct OrderBlock
-{
-    std::string symbol;
-    int64_t orderId;
-    //double oriPrice;
-    double avgPrice;
-    double totalQty;
-    double commissionQty;
-};
 
 //############################################################//
 //   BiTrader Class
 //############################################################//
-class BiTrader: public ThreadBase
+class BiTrader
 {
 public:
     BiTrader(const std::string& url, const std::string& api_key, const std::string& secret_key);
     ~BiTrader();
 
-    // 线程运行实体
-    void Run();
-
-    // Interface
-    void StInsertSignal(int strategyid, \
-                        std::string symbol, \
-                        Binance::OrderSide side, \
-                        double price );
-    void InsertOrder(int strategyid, \
-                     std::string symbol, \
+    // 币安报单
+    bool InsertOrder(std::string symbol, \
                      Binance::OrderSide side, \
                      double price, \
                      double qty, \
                      Binance::OrderType type, \
-                     Binance::TimeInForce tif);
-    void ParseInsertResponse(int strategyid, \
-                             std::string rsp);
+                     Binance::TimeInForce tif, \
+                     double& exe_price, \
+                     double& exe_qty, \
+                     double& commission_qty);
+    // 解析报单回报
+    void ParseInsertResp(std::string rsp, double& exe_price, double& exe_qty, double& commission_qty);
 
     // curl回调函数
     static size_t TDWriteCallback(void *contents, size_t size, size_t nmemb, std::string *userp);
 
-private:
-    // strategy
-    double TdUnit;
-    std::vector<OrderBlock> mStrategyOrders[ST_SIZE];
+private:    
     // Key
     std::string mTdUrl;
     std::string mTdApiKey;

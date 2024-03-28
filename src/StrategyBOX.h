@@ -9,7 +9,6 @@
 #pragma once
 
 #include <ThreadBase.h>
-#include "Strategy.h"
 
 
 //############################################################//
@@ -23,13 +22,14 @@ public:
 
     // 线程运行实体
     void Run();
-
-    // Interface
+    // 注册策略
     void EntrustStrategy(Strategy *strategy);
+    // 注销策略
+    void DetrustStrategy(int strategy_id);
 
 private:
-    double mTotalProfit;
-    double mTotalCommission;
+    double totalProfit;
+    double totalCommission;
 
     std::chrono::time_point<std::chrono::steady_clock> runTime;
     std::chrono::time_point<std::chrono::steady_clock> nowTime;
