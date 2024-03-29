@@ -163,12 +163,21 @@ void OrderManager::StrategySellSignal(int strategy_id, std::string symbol, doubl
         if(order_block.symbol==symbol)
             qty = order_block.totalQty - order_block.commissionQty;
     }
-
+    
     // 币安报单
     sptrAsyncLogger->info("OrderManager::StrategySellSignal() symbol={} price={} qty={}", symbol, price, qty);
     bool ret = uptrBiTrader->InsertOrder(symbol, Binance::OrderSide::SELL, price, qty, \
                                         Binance::OrderType::MARKET, Binance::TimeInForce::GTC, \
                                         exe_price, exe_qty, comm_qty);
+    // 二次报单
+    while(exe_qty == 0.0)
+    {
+        qty *= 0.998;
+        sptrAsyncLogger->info("OrderManager::StrategySellSignal() ReSell symbol={} price={} qty={}", symbol, price, qty);
+        ret = uptrBiTrader->InsertOrder(symbol, Binance::OrderSide::SELL, price, qty, \
+                                        Binance::OrderType::MARKET, Binance::TimeInForce::GTC, \
+                                        exe_price, exe_qty, comm_qty);
+    }
     
     // 维护策略OrderVector
     if( ret )

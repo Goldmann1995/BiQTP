@@ -176,6 +176,19 @@ void BiTrader::ParseInsertResp(std::string rsp, double& exe_price, double& exe_q
             return;
         }
 
+        /*** 报错处理 ***/
+        int code = 0;
+        std::string reason = "";
+        if( jsondoc.HasMember("code") )
+        {
+            code = jsondoc["code"].GetInt();
+            if( jsondoc.HasMember("msg") )
+                reason = jsondoc["msg"].GetString();
+            sptrAsyncLogger->error("BiTrader::ParseInsertResp() ErrorRsp: {} {} ", code, reason);
+            return;
+        }
+
+        /*** 常规处理 ***/
         std::string symbol = "";
         double cummulative_qty = 0.0;
         if( jsondoc.HasMember("symbol") )

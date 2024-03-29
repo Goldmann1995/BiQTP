@@ -200,8 +200,8 @@ void AdvancedSLR2::Run()
                                         symbol_iter.first, adr1m, adr2m, adr3m, adr5m);
                 
             #if !_BACK_TEST_
-                double buyPrice = mdring[symbol_iter.second].GetLastPrice();
-                uptrOrderManager->PushSignal(ASLR2, symbol_iter.first, 1, buyPrice);
+                //double buyPrice = mdring[symbol_iter.second].GetLastPrice();
+                //uptrOrderManager->PushSignal(ASLR2, symbol_iter.first, 1, buyPrice);
             #endif
             }
         }
@@ -226,7 +226,7 @@ void AdvancedSLR2::Run()
                                         symbol_iter.first, GetPositiveRate(), profitRate, mTotalProfitRate, mTotalCommissionRate);
             
             #if !_BACK_TEST_
-                uptrOrderManager->PushSignal(ASLR2, symbol_iter.first, 2, sellPrice);
+                //uptrOrderManager->PushSignal(ASLR2, symbol_iter.first, 2, sellPrice);
             #endif
             }
         }
